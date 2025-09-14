@@ -69,14 +69,16 @@ public class ExportViewer extends BaseFragment {
         listView = new RecyclerListView(context);
         listView.setItemAnimator(null);
         listView.setLayoutAnimation(null);
-        listView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
+        LinearLayoutManager manager;
+        listView.setLayoutManager(manager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
             @Override
             public boolean supportsPredictiveItemAnimations() {
                 return false;
             }
         });
+        manager.setStackFromEnd(true);
         listView.setVerticalScrollBarEnabled(true);
-        frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.BOTTOM));
+        frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         listView.setAdapter(new ExportViewer.ListAdapter(context));
 
         return fragmentView;
