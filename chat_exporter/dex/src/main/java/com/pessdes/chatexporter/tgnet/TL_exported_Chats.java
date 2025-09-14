@@ -11,7 +11,6 @@ public class TL_exported_Chats extends exported_Chats {
     public void readParams(InputSerializedData stream, boolean exception) {
         chats = Vector.deserialize(stream, exported_Chat::TLdeserialize, exception);
     }
-
     @Override
     public void serializeToStream(OutputSerializedData stream) {
         stream.writeInt32(constructor);

@@ -75,7 +75,6 @@ public class ExportedChatActivity extends BaseFragment {
                 return false;
             }
         });
-        manager.setStackFromEnd(true);
         listView.setVerticalScrollBarEnabled(true);
         frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         listView.setAdapter(new ExportedChatActivity.ListAdapter(context));
