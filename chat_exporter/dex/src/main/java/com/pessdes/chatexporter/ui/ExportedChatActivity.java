@@ -37,7 +37,6 @@ public class ExportedChatActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
-        exported.messages = (java.util.ArrayList<TLRPC.Message>) exported.messages.reversed();
         var chat = getMessagesController().getUserOrChat(exported.chat.id);
         String name;
         if (chat == null) {
