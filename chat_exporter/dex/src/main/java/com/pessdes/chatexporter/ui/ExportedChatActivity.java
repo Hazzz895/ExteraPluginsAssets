@@ -1,6 +1,6 @@
 /*
-* Some of the code was copied from https://github.com/AyuGram/AyuGram4A/blob/rewrite/TMessagesProj/src/main/java/com/radolyn/ayugram/ui/AyuMessageHistory.java
-* */
+ * Some of the code was copied from https://github.com/AyuGram/AyuGram4A/blob/rewrite/TMessagesProj/src/main/java/com/radolyn/ayugram/ui/AyuMessageHistory.java
+ * */
 
 package com.pessdes.chatexporter.ui;
 
@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.chatexporter.tgnet.exported_Chat;
 
+import org.telegram.messenger.ChatMessageSharedResources;
 import org.telegram.messenger.MessageObject;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -29,6 +30,7 @@ public class ExportedChatActivity extends BaseFragment {
     private int rowCount;
     private RecyclerListView listView;
     private exported_Chat exported;
+    private ChatMessageSharedResources sharedResources;
 
     public ExportedChatActivity(@NonNull exported_Chat exported) {
         this.exported = exported;
@@ -37,6 +39,7 @@ public class ExportedChatActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
+        sharedResources = new ChatMessageSharedResources(context);
         var chat = exported.peer;
         String name;
         if (chat == null) {
@@ -105,7 +108,8 @@ public class ExportedChatActivity extends BaseFragment {
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view;
             if (viewType == 1) {
-                view = new ChatMessageCell(context, getCurrentAccount());
+                boolean isChat = exported.peer instanceof TLRPC.Chat;
+                view = new ChatMessageCell(context, getCurrentAccount(), isChat, sharedResources, getResourceProvider());
             } else {
                 view = null;
             }
@@ -115,13 +119,33 @@ public class ExportedChatActivity extends BaseFragment {
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
             if (holder.getItemViewType() == 1) {
-                var ayuMessageDetailCell = (ChatMessageCell) holder.itemView;
+                ChatMessageCell messageCell = (ChatMessageCell) holder.itemView;
 
                 var tl_message = exported.messages.get(position);
                 var msg = createMessageObject(tl_message);
 
-                ayuMessageDetailCell.setMessageObject(msg, null, false, false, false);
-                ayuMessageDetailCell.setId(position);
+                boolean pinnedTop = false;
+                boolean pinnedBottom = false;
+                boolean firstInChat = true;
+
+                if (exported.peer instanceof TLRPC.Chat) {
+                    if (position > 0) {
+                        MessageObject prevMessage = createMessageObject(exported.messages.get(position - 1));
+                        if (prevMessage.isOutOwner() == msg.isOutOwner() && Math.abs(prevMessage.messageOwner.date - msg.messageOwner.date) <= 300 && prevMessage.getFromChatId() == msg.getFromChatId()) {
+                            pinnedTop = true;
+                            firstInChat = false;
+                        }
+                    }
+                    if (position < rowCount - 1) {
+                        MessageObject nextMessage = createMessageObject(exported.messages.get(position + 1));
+                        if (nextMessage.isOutOwner() == msg.isOutOwner() && Math.abs(nextMessage.messageOwner.date - msg.messageOwner.date) <= 300 && nextMessage.getFromChatId() == msg.getFromChatId()) {
+                            pinnedBottom = true;
+                        }
+                    }
+                }
+
+                messageCell.setMessageObject(msg, null, pinnedBottom, pinnedTop, firstInChat);
+                messageCell.setId(position);
             }
         }
 
