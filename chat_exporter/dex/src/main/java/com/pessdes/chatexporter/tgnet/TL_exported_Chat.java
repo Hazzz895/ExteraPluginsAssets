@@ -19,7 +19,7 @@ public class TL_exported_Chat extends exported_Chat {
     @Override
     public void serializeToStream(OutputSerializedData stream) {
         stream.writeInt32(constructor);
-        Util.serializeMessages(stream, messages);
+        Vector.serialize(stream, messages);
         peer.serializeToStream(stream);
     }
 
