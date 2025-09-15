@@ -130,7 +130,6 @@ public class ExportedChatsActivity extends BaseFragment {
                 id = 0;
             }
             dialog.id = id;
-            Log.d("ExportedChatsActivity", "Dialog id: " + id);
             dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
 
             dialogCell.setDialog(dialog, position, 0);
