@@ -20,6 +20,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.messenger.MessageObject;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -112,25 +113,38 @@ public class ExportedChatsActivity extends BaseFragment {
             DialogCell dialogCell = (DialogCell) holder.itemView;
             exported_Chat chat = chats.get(position);
 
+            if (chat.peer == null) {
+                return;
+            }
+
+            if (chat.peer instanceof TLRPC.User) {
+                getMessagesController().putUser((TLRPC.User) chat.peer, true);
+            } else if (chat.peer instanceof TLRPC.Chat) {
+                getMessagesController().putChat((TLRPC.Chat) chat.peer, true);
+            }
+
             TLRPC.Dialog dialog = new TLRPC.TL_dialog();
             long id;
-            
-            if (chat.peer == null) {
-                id = 0;
-            }
-            else if (chat.peer instanceof TLRPC.User) {
+
+            if (chat.peer instanceof TLRPC.User) {
                 id = ((TLRPC.User) chat.peer).id;
             } else if (chat.peer instanceof TLRPC.Chat) {
                 id = -((TLRPC.Chat) chat.peer).id;
+            } else {
+                return;
             }
-            else {
-                id = 0;
-            }
-
-            dialog.peer = new TLRPC.TL_peerChat();
-            dialog.peer.chat_id = id;
 
             dialog.id = id;
+
+            if (chat.messages != null && !chat.messages.isEmpty()) {
+                TLRPC.Message lastMessage = (TLRPC.Message) chat.messages.get(0);
+                dialog.top_message = lastMessage.id;
+                dialog.last_message_date = lastMessage.date;
+                ArrayList<MessageObject> messageObjects = new ArrayList<>();
+                messageObjects.add(new MessageObject(getCurrentAccount(), lastMessage, true, false));
+                getMessagesController().dialogMessage.put(dialog.id, messageObjects);
+            }
+
             dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
 
             dialogCell.setDialog(dialog, position, 0);
