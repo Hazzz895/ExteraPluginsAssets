@@ -117,12 +117,6 @@ public class ExportedChatsActivity extends BaseFragment {
                 return;
             }
 
-            if (chat.peer instanceof TLRPC.User) {
-                getMessagesController().putUser((TLRPC.User) chat.peer, true);
-            } else if (chat.peer instanceof TLRPC.Chat) {
-                getMessagesController().putChat((TLRPC.Chat) chat.peer, true);
-            }
-
             TLRPC.Dialog dialog = new TLRPC.TL_dialog();
             long id;
 
@@ -137,7 +131,7 @@ public class ExportedChatsActivity extends BaseFragment {
             dialog.id = id;
 
             if (chat.messages != null && !chat.messages.isEmpty()) {
-                TLRPC.Message lastMessage = (TLRPC.Message) chat.messages.get(0);
+                TLRPC.Message lastMessage = (TLRPC.Message) chat.messages.get(chat.messages.size()-1);
                 dialog.top_message = lastMessage.id;
                 dialog.last_message_date = lastMessage.date;
                 ArrayList<MessageObject> messageObjects = new ArrayList<>();
