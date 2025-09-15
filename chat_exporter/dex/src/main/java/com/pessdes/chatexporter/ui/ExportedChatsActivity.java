@@ -20,9 +20,9 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
+import android.util.Log;
 
 import java.util.ArrayList;
-
 public class ExportedChatsActivity extends BaseFragment {
 
     private RecyclerListView listView;
@@ -130,6 +130,7 @@ public class ExportedChatsActivity extends BaseFragment {
                 id = 0;
             }
             dialog.id = id;
+            Log.d("ExportedChatsActivity", "Dialog id: " + id);
             dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
 
             dialogCell.setDialog(dialog, position, 0);
