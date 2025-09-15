@@ -13,14 +13,14 @@ public class TL_exported_Chat extends exported_Chat {
     @Override
     public void readParams(InputSerializedData stream, boolean exception) {
         messages = Util.deserializeMessages(stream, exception);
-        chat = TLRPC.Chat.TLdeserialize(stream, stream.readInt32(exception), exception);
+        readPeer(stream, exception);
     }
 
     @Override
     public void serializeToStream(OutputSerializedData stream) {
         stream.writeInt32(constructor);
         Vector.serialize(stream, messages);
-        chat.serializeToStream(stream);
+        peer.serializeToStream(stream);
     }
 
 }

@@ -113,10 +113,24 @@ public class ExportedChatsActivity extends BaseFragment {
             exported_Chat chat = chats.get(position);
 
             TLRPC.Dialog dialog = new TLRPC.TL_dialog();
-            dialog.id = -chat.chat.id;
-            dialog.peer = new TLRPC.TL_peerChat();
-            dialog.peer.chat_id = chat.chat.id;
-            dialog.notify_settings = new TLRPC.TL_peerNotifySettings(); // чтобы избежать NullPointerException
+            long id;
+            if (chat.peer == null) {
+                id = 0;
+            }
+            else if (chat.peer instanceof TLRPC.User) {
+                dialog.peer = new TLRPC.TL_peerUser();
+                id = ((TLRPC.User) chat.peer).id;
+                dialog.peer.user_id = id;
+            } else if (chat.peer instanceof TLRPC.Chat) {
+                dialog.peer = new TLRPC.TL_peerChat();
+                id = ((TLRPC.Chat) chat.peer).id;
+                dialog.peer.chat_id = id;
+            }
+            else {
+                id = 0;
+            }
+            dialog.id = id;
+            dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
 
             dialogCell.setDialog(dialog, position, 0);
         }

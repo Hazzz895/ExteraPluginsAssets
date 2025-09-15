@@ -37,7 +37,7 @@ public class ExportedChatActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
-        var chat = getMessagesController().getUserOrChat(exported.chat.id);
+        var chat = exported.peer;
         String name;
         if (chat == null) {
             name = "?"; // wtf

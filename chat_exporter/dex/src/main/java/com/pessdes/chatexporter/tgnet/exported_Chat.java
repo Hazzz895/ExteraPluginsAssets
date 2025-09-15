@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public abstract class exported_Chat extends TLObject {
     public ArrayList<TLRPC.Message> messages = new ArrayList<>();
-    public TLRPC.Chat chat;
+    public TLObject peer;
 
     public static exported_Chat TLdeserialize(InputSerializedData stream, int constructor, boolean exception) {
         exported_Chat result = null;
@@ -24,6 +24,17 @@ public abstract class exported_Chat extends TLObject {
             result.readParams(stream, exception);
         }
         return result;
+    }
+
+    protected void readPeer(InputSerializedData stream, boolean exception) {
+        var constructor = stream.readInt32(exception);
+        peer = TLRPC.Chat.TLdeserialize(stream, constructor, false);
+        if (peer == null) {
+            peer = TLRPC.User.TLdeserialize(stream, constructor, false);
+        }
+        if (peer == null && exception) {
+            throw new RuntimeException(String.format("can't parse magic %x in exported_Chat (argument peer)", constructor));
+        }
     }
 }
 
