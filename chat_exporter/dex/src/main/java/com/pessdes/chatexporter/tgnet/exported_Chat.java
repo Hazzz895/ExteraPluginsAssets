@@ -30,7 +30,7 @@ public abstract class exported_Chat extends TLObject {
         var constructor = stream.readInt32(exception);
         peer = TLRPC.Chat.TLdeserialize(stream, constructor, false);
         if (peer == null) {
-            peer = TLRPC.User.TLdeserialize(stream, constructor, false);
+            peer = TLRPC.User.TLdeserialize(stream, constructor, exception);
         }
         if (peer == null && exception) {
             throw new RuntimeException(String.format("can't parse magic %x in exported_Chat (argument peer)", constructor));
