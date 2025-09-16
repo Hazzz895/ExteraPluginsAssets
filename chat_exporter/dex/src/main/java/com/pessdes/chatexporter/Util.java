@@ -26,7 +26,12 @@ public class Util {
             constructor = stream.readInt32(exception);
             var message = TLRPC.Message.TLdeserialize(stream, constructor, exception);
             if (message != null) {
+                boolean oLegacy = message.legacy;
+                message.legacy = true;
+
                 message.readAttachPath(stream, userId);
+
+                message.legacy = oLegacy;
                 result.add(message);
             }
         }
@@ -37,17 +42,13 @@ public class Util {
         stream.writeInt32(Vector.constructor);
         stream.writeInt32(messages.size());
 
-        try {
-            Method writeAttachPathMethod = TLRPC.Message.class.getDeclaredMethod("writeAttachPath", OutputSerializedData.class);
-            writeAttachPathMethod.setAccessible(true);
+        for (var message : messages) {
+            boolean oLegacy = message.legacy;
+            message.legacy = true;
 
-            for (var message : messages) {
-                message.serializeToStream(stream);
-                writeAttachPathMethod.invoke(message, stream);
-            }
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Failed to serialize messages using reflection", e);
+            message.serializeToStream(stream);
+
+            message.legacy = oLegacy;
         }
     }
 
