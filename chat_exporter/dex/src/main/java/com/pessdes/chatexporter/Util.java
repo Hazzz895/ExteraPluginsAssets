@@ -13,7 +13,7 @@ public class Util {
         var constructor = stream.readInt32(exception);
         if (constructor != Vector.constructor) {
             if (exception) {
-                throw new RuntimeException(String.format("can't parse magic %x in messages_Messages", constructor));
+                throw new RuntimeException(String.format("can't parse magic %x in Vector", constructor));
             }
             return new ArrayList<>();
         }
@@ -26,12 +26,7 @@ public class Util {
             constructor = stream.readInt32(exception);
             var message = TLRPC.Message.TLdeserialize(stream, constructor, exception);
             if (message != null) {
-                boolean oLegacy = message.legacy;
-                message.legacy = true;
-
                 message.readAttachPath(stream, userId);
-
-                message.legacy = oLegacy;
                 result.add(message);
             }
         }
