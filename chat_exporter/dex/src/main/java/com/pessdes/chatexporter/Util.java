@@ -27,7 +27,7 @@ public class Util {
                 }
                 return null;
             }
-            if (message.legacy) {
+            if (!message.legacy) {
                 message.readAttachPath(stream, currentUserId);
             }
             messages.add(message);
