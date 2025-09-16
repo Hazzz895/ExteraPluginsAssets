@@ -20,15 +20,16 @@ public class Util {
         long currentUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
         for (int a = 0; a < count; a++) {
             int constructor = stream.readInt32(exception);
-            TLRPC.Message object = TLRPC.Message.TLdeserialize(stream, constructor, exception);
-            if (object == null) {
+            TLRPC.Message message = TLRPC.Message.TLdeserialize(stream, constructor, exception);
+            if (message == null) {
                 if (exception) {
                     throw new RuntimeException(String.format("can't parse magic %x in Message", constructor));
                 }
                 return null;
             }
-            object.readAttachPath(stream, currentUserId);
-            messages.add(object);
+            message.legacy = true;
+            message.readAttachPath(stream, currentUserId);
+            messages.add(message);
         }
         return messages;
     }
