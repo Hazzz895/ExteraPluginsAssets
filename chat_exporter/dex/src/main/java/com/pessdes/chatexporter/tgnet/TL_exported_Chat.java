@@ -5,13 +5,14 @@ import com.pessdes.chatexporter.Util;
 import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;
 import org.telegram.tgnet.Vector;
+import org.telegram.tgnet.TLRPC;
 
 public class TL_exported_Chat extends exported_Chat {
     public static final int constructor = 0x67670001;
 
     @Override
     public void readParams(InputSerializedData stream, boolean exception) {
-        messages = Util.deserializeMessages(stream, exception);
+        messages = Vector.deserialize(stream, TLRPC.Message::TLdeserialize, exception);
         readPeer(stream, exception);
     }
 
