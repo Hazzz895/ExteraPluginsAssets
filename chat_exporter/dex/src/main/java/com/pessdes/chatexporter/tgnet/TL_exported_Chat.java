@@ -1,14 +1,14 @@
 package com.pessdes.chatexporter.tgnet;
 
-import com.pessdes.chatexporter.Util;
+import android.text.TextUtils;
 
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;
-import org.telegram.tgnet.Vector;
 import org.telegram.tgnet.TLRPC;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class TL_exported_Chat extends exported_Chat {
     public static final int constructor = 0x67670001;
@@ -23,13 +23,14 @@ public class TL_exported_Chat extends exported_Chat {
             return;
         }
         int count = stream.readInt32(exception);
-        messages = new ArrayList<TLRPC.Message>(count);
+        messages = new ArrayList<>(count);
+        long currentUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
         for (int a = 0; a < count; a++) {
             TLRPC.Message message = TLRPC.Message.TLdeserialize(stream, stream.readInt32(exception), exception);
             if (message == null) {
                 return;
             }
-            message.attachPath = stream.readString(exception);
+            message.readAttachPath(stream, currentUserId);
             messages.add(message);
         }
         readPeer(stream, exception);
@@ -38,7 +39,29 @@ public class TL_exported_Chat extends exported_Chat {
     @Override
     public void serializeToStream(OutputSerializedData stream) {
         stream.writeInt32(constructor);
-        Vector.serialize(stream, messages);
+        stream.writeInt32(0x1cb5c415);
+        stream.writeInt32(messages.size());
+        long currentUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        for (TLRPC.Message message : messages) {
+            message.serializeToStream(stream);
+
+            // Symmetrical write logic, reverse-engineered from readAttachPath
+            boolean hasMedia = message.media != null && !(message.media instanceof TLRPC.TL_messageMediaEmpty) && !(message.media instanceof TLRPC.TL_messageMediaWebPage);
+            if ((message.out || message.peer_id != null && message.from_id != null && message.peer_id.user_id != 0 && message.peer_id.user_id == message.from_id.user_id && message.from_id.user_id == currentUserId) && (message.id < 0 || hasMedia || message.send_state == 3) || message.legacy) {
+                String path = message.attachPath != null ? message.attachPath : "";
+                if ((message.id < 0 || message.send_state == 3 || message.legacy) && message.params != null && !message.params.isEmpty()) {
+                    StringBuilder builder = new StringBuilder();
+                    for (java.util.Map.Entry<String, String> entry : message.params.entrySet()) {
+                        builder.append(entry.getKey()).append("|=|").append(entry.getValue()).append("||");
+                    }
+                    path = "||" + builder.toString() + path;
+                }
+                stream.writeString(path);
+            }
+            if ((message.flags & TLRPC.MESSAGE_FLAG_FWD) != 0 && message.id < 0) {
+                stream.writeInt32(message.fwd_msg_id);
+            }
+        }
         peer.serializeToStream(stream);
     }
 
