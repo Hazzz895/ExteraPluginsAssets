@@ -13,17 +13,7 @@ public class TL_exported_Chat extends exported_Chat {
 
     @Override
     public void readParams(InputSerializedData stream, boolean exception) {
-        final long currentUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
-        messages = Vector.deserialize(stream, (s, constructor, ex) -> {
-            TLRPC.Message message = TLRPC.Message.TLdeserialize(s, constructor, ex);
-            if (message != null) {
-                boolean oLegacy = message.legacy;
-                message.legacy = true;
-                message.readAttachPath(s, currentUserId);
-                message.legacy = oLegacy;
-            }
-            return message;
-        }, exception);
+        messages = Util.deserializeMessages(stream, exception);
         readPeer(stream, exception);
     }
 
