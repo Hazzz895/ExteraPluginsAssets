@@ -5,7 +5,6 @@ import com.pessdes.chatexporter.Util;
 import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;
 import org.telegram.tgnet.Vector;
-import org.telegram.tgnet.TLRPC;
 
 public class TL_exported_Chat extends exported_Chat {
     public static final int constructor = 0x67670001;
@@ -19,7 +18,7 @@ public class TL_exported_Chat extends exported_Chat {
     @Override
     public void serializeToStream(OutputSerializedData stream) {
         stream.writeInt32(constructor);
-        Util.serializeMessages(stream, messages);
+        Vector.serialize(stream, messages);
         peer.serializeToStream(stream);
     }
 

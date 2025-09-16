@@ -5,37 +5,32 @@ import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.Vector;
-
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 public class Util {
     public static ArrayList<TLRPC.Message> deserializeMessages(InputSerializedData stream, boolean exception) {
-        var constructor = stream.readInt32(exception);
-        if (constructor != Vector.constructor) {
+        int magic = stream.readInt32(exception);
+        if (magic != Vector.constructor) { // Vector.constructor
             if (exception) {
-                throw new RuntimeException(String.format("can't parse magic %x in Vector", constructor));
+                throw new RuntimeException(String.format("wrong Vector magic, got %x", magic));
             }
-            return new ArrayList<>();
+            return null;
         }
-
-        var size = stream.readInt32(exception);
-        var result = new ArrayList<TLRPC.Message>();
-        var userId = UserConfig.getInstance(UserConfig.selectedAccount).clientUserId;
-
-        for (var i = 0; i < size; i++) {
-            constructor = stream.readInt32(exception);
-            var message = TLRPC.Message.TLdeserialize(stream, constructor, exception);
-            if (message != null) {
-                boolean oLegacy = message.legacy;
-                message.legacy = true;
-
-                message.readAttachPath(stream, userId);
-
-                message.legacy = oLegacy;
-                result.add(message);
+        int count = stream.readInt32(exception);
+        var messages = new ArrayList<TLRPC.Message>(count);
+        long currentUserId = UserConfig.getInstance(UserConfig.selectedAccount).getClientUserId();
+        for (int a = 0; a < count; a++) {
+            int constructor = stream.readInt32(exception);
+            TLRPC.Message object = TLRPC.Message.TLdeserialize(stream, constructor, exception);
+            if (object == null) {
+                if (exception) {
+                    throw new RuntimeException(String.format("can't parse magic %x in Message", constructor));
+                }
+                return null;
             }
+            object.readAttachPath(stream, currentUserId);
+            messages.add(object);
         }
-        return result;
+        return messages;
     }
 
     public static void serializeMessages(OutputSerializedData stream, ArrayList<TLRPC.Message> messages) {
