@@ -17,7 +17,10 @@ public class TL_exported_Chat extends exported_Chat {
         messages = Vector.deserialize(stream, (s, constructor, ex) -> {
             TLRPC.Message message = TLRPC.Message.TLdeserialize(s, constructor, ex);
             if (message != null) {
+                boolean oLegacy = message.legacy;
+                message.legacy = true;
                 message.readAttachPath(s, currentUserId);
+                message.legacy = oLegacy;
             }
             return message;
         }, exception);
