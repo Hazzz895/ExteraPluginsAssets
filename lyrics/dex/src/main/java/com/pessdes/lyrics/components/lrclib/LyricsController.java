@@ -134,7 +134,9 @@ public class LyricsController {
             return getLyricsInternal(trackName, artistName, trackDuration);
         }
         catch (Exception ex) {
-            return new Lyrics(-1, ex.getMessage(), null, null, 0, false, null, null);
+            var result = new Lyrics(-1, "", null, null, 0, false, null, null);
+            result.exception = ex;
+            return result;
         }
     }
 }
