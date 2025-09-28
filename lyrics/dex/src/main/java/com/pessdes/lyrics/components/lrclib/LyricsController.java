@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -50,7 +51,7 @@ public class LyricsController {
         return result;
     }
 
-    private static Map<String, Lyrics> cachedLyrics;
+    private static final Map<String, Lyrics> cachedLyrics = new HashMap<>();
 
     private String getCacheKey(String trackName, String artistName, int trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
