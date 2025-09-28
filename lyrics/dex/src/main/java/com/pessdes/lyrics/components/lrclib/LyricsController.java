@@ -124,10 +124,11 @@ public class LyricsController {
 
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration) {
-        var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
+        return new Lyrics(0, "test", "test", "test", 0, false, "test", null);
+        /*var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
         if (cachedLyrics != null) {
             return cachedLyrics;
         }
-        return getLyricsInternal(trackName, artistName, trackDuration);
+        return getLyricsInternal(trackName, artistName, trackDuration);*/
     }
 }
