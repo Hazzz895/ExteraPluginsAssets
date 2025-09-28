@@ -6,8 +6,10 @@ import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -68,7 +70,7 @@ public class LyricsController {
 
         return new URL(BASE_URL + "?track_name=" + URLEncoder.encode(trackName, "UTF-8") + "&artist_name=" + URLEncoder.encode(artistName, "UTF-8"));
     }
-    private Lyrics getLyricsInternal(String trackName, String artistName, int trackDuration) {
+    private Lyrics getLyricsInternal(String trackName, String artistName, int trackDuration) throws JSONException, IOException {
         try {
             HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
             con.setRequestMethod("GET");
@@ -118,17 +120,21 @@ public class LyricsController {
             return result;
         }
         catch (Exception ex) {
-            return null;
+            throw ex;
         }
     }
 
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration) {
-        return new Lyrics(0, "test", "test", "test", 0, false, "test", null);
-        /*var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
-        if (cachedLyrics != null) {
-            return cachedLyrics;
+        try {
+            var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
+            if (cachedLyrics != null) {
+                return cachedLyrics;
+            }
+            return getLyricsInternal(trackName, artistName, trackDuration);
         }
-        return getLyricsInternal(trackName, artistName, trackDuration);*/
+        catch (Exception ex) {
+            return new Lyrics(-1, ex.getMessage(), null, null, 0, false, null, null);
+        }
     }
 }
