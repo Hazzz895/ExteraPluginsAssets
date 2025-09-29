@@ -145,6 +145,7 @@ public class LyricsController {
             if (fromCache) {
                 var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
                 if (cachedLyrics != null) {
+                    log("Lyrics found in cache!");
                     result = cachedLyrics;
                 }
             }
@@ -152,10 +153,12 @@ public class LyricsController {
             if (!fromCache || result == null) {
                 result = getLyricsInternal(trackName, artistName, trackDuration);
                 if (result != null) {
+                    log("Got lyrics form LRClib");
                     cacheLyrics(trackName, artistName, trackDuration, result);
+                    log("Successful cached");
                 }
             }
-            log(result != null ? "Got lyrics: " + result : "Lyrics not found");
+            log(result != null ? ("Got lyrics: " + result) : "Lyrics not found");
             return result;
         }
         catch (Exception ex) {
