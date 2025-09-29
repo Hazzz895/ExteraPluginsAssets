@@ -1,5 +1,10 @@
 package com.pessdes.lyrics.components.lrclib.dto;
 
+import android.annotation.SuppressLint;
+
+import androidx.annotation.NonNull;
+
+import com.pessdes.lyrics.Util;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 
 import org.jetbrains.annotations.NotNull;
@@ -40,5 +45,12 @@ public class Lyrics {
         if (plainSyncedLyrics != null) {
             this.syncedLyrics = LyricsController.getInstance().parseSyncedLyrics(plainSyncedLyrics);
         }
+    }
+
+    @SuppressLint("DefaultLocale")
+    @NonNull
+    @Override
+    public String toString() {
+        return String.format("Lyrics{id=%d,\ntrackName='%s',\nartistName='%s',\nalbumName='%s',\nduration=%d,\ninstrumental=%b,\nplainLyrics='%s',\nplainSyncedLyrics='%s'}", id, trackName, artistName, albumName, duration, instrumental, Util.trimStringWithEllipsis(plainLyrics, 25), Util.trimStringWithEllipsis(plainSyncedLyrics, 25));
     }
 }

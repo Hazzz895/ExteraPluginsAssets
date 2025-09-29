@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 
 import java.io.BufferedReader;
@@ -34,6 +35,8 @@ public class LyricsController {
         instance = this;
     }
     public List<SyncedLyricsLine> parseSyncedLyrics(String plainSyncedLyrics) {
+        if (plainSyncedLyrics == null) return null;
+
         List<SyncedLyricsLine> result = new ArrayList<>();
         String[] lines = plainSyncedLyrics.split("\n");
 
@@ -60,12 +63,15 @@ public class LyricsController {
     private String getCacheKey(String trackName, String artistName, int trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
+
     private Lyrics getCachedLyrics(String trackName, String artistName, int trackDuration) {
         return cachedLyrics.get(getCacheKey(trackName, artistName, trackDuration));
     }
+
     private void cacheLyrics(String trackName, String artistName, int trackDuration, Lyrics lyrics) {
         cachedLyrics.put(getCacheKey(trackName, artistName, trackDuration), lyrics);
     }
+
     private final String BASE_URL = "https://lrclib.net/api/search";
 
     private URL getRequestUrl(String trackName, String artistName) throws UnsupportedEncodingException, MalformedURLException {
@@ -121,6 +127,7 @@ public class LyricsController {
             return result;
         }
         catch (Exception ex) {
+            log("Exception in getLyricsInternal: " + ex.getMessage());
             return null;
         }
     }
@@ -133,20 +140,25 @@ public class LyricsController {
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration, boolean fromCache) {
         try {
+            Lyrics result = null;
             if (fromCache) {
                 var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
                 if (cachedLyrics != null) {
-                    return cachedLyrics;
+                    result = cachedLyrics;
                 }
             }
 
-            var result =  getLyricsInternal(trackName, artistName, trackDuration);
-            if (result != null) {
-                cacheLyrics(trackName, artistName, trackDuration, result);
+            if (result == null) {
+                result = getLyricsInternal(trackName, artistName, trackDuration);
+                if (result != null) {
+                    cacheLyrics(trackName, artistName, trackDuration, result);
+                }
             }
+            log(result != null ? "Got lyrics: " + result : "Lyrics not found");
             return result;
         }
         catch (Exception ex) {
+            log("Exception in getLyrics: " + ex.getMessage());
             return null;
         }
     }
@@ -155,5 +167,21 @@ public class LyricsController {
         var activity = new LyricsActivity();
         baseFragment.presentFragment(activity);
         return activity;
+    }
+
+    private Utilities.Callback<Object> loggingBridge = null;
+
+    public void setLoggingBridge(Utilities.Callback<Object> loggingBridge) {
+        this.loggingBridge = loggingBridge;
+    }
+
+    private void logInternal(Object message) {
+        if (loggingBridge != null) {
+            loggingBridge.run(message);
+        }
+    }
+
+    public static void log(Object message) {
+        getInstance().logInternal(message);
     }
 }
