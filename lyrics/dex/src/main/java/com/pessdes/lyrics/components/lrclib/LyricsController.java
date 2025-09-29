@@ -80,6 +80,7 @@ public class LyricsController {
     private Lyrics getLyricsInternal(String trackName, String artistName, int trackDuration) {
         try {
             HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
+            LyricsController.log("Sending request to: " + con.getURL());
             con.setRequestMethod("GET");
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(con.getInputStream())
@@ -92,7 +93,7 @@ public class LyricsController {
             }
             in.close();
             con.disconnect();
-
+            LyricsController.log("Got response: " + response);
             var json = new JSONArray(String.valueOf(response));
 
             if (json.length() == 0) {
