@@ -27,13 +27,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LyricsController {
-    private static LyricsController instance;
+    private static final LyricsController instance = new LyricsController();
+    private final Map<String, Lyrics> cachedLyrics = new HashMap<>();
     public static LyricsController getInstance() {
         return instance == null ? new LyricsController() : instance;
     }
-    public LyricsController() {
-        instance = this;
-    }
+    private LyricsController() {}
     public List<SyncedLyricsLine> parseSyncedLyrics(String plainSyncedLyrics) {
         if (plainSyncedLyrics == null) return null;
 
@@ -57,8 +56,6 @@ public class LyricsController {
 
         return result;
     }
-
-    private static final Map<String, Lyrics> cachedLyrics = new HashMap<>();
 
     private String getCacheKey(String trackName, String artistName, int trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;

@@ -159,7 +159,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         var authors = messageObject.getMusicAuthor();
         var duration = (int)messageObject.getDuration();
         Utilities.globalQueue.postRunnable(() -> {
-            lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
+            lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration, true);
             if (lastLyrics != null) {
                 AndroidUtilities.runOnUIThread(() -> lyricsScroller.setLyrics(lastLyrics));
             }
