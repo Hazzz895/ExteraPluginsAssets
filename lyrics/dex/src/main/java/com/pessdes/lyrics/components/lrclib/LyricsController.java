@@ -126,17 +126,33 @@ public class LyricsController {
 
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration) {
+        return getLyrics(trackName, artistName, trackDuration, false);
+    }
+
+    @Nullable
+    public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration, boolean fromCache) {
         try {
-            var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
-            if (cachedLyrics != null) {
-                return cachedLyrics;
+            if (fromCache) {
+                var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
+                if (cachedLyrics != null) {
+                    return cachedLyrics;
+                }
             }
-            return getLyricsInternal(trackName, artistName, trackDuration);
-        }
-        catch (Exception ex) {
-            var result = new Lyrics(-1, "", null, null, 0, false, null, null);
-            result.exception = ex;
+
+            var result =  getLyricsInternal(trackName, artistName, trackDuration);
+            if (result != null) {
+                cacheLyrics(trackName, artistName, trackDuration, result);
+            }
             return result;
         }
+        catch (Exception ex) {
+            return null;
+        }
+    }
+
+    public LyricsActivity presentLyricsActivity(BaseFragment baseFragment) {
+        var activity = new LyricsActivity();
+        baseFragment.presentFragment(activity);
+        return activity;
     }
 }
