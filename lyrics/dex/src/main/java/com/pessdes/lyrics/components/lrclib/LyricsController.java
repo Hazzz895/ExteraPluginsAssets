@@ -95,17 +95,17 @@ public class LyricsController {
             var preResult = new ArrayList<Lyrics>();
             for (int i = 0; i < json.length(); i++) {
                 var item = json.getJSONObject(i);
-                if (item.getBoolean("instrumental")) continue;
-                if (trackDuration > 0 && item.getInt("duration") != trackDuration) return null;
+                if (item.optBoolean("instrumental", false)) continue;
+                if (trackDuration > 0 && item.getInt("duration") != trackDuration && item.optString("syncedLyrics", null) != null) return null;
                 preResult.add(new Lyrics(
-                        item.getInt("id"),
-                        item.getString("trackName"),
-                        item.getString("artistName"),
-                        item.getString("albumName"),
-                        item.getInt("duration"),
-                        item.getBoolean("instrumental"),
-                        item.getString("plainLyrics"),
-                        item.getString("syncedLyrics")
+                        item.optInt("id", 0),
+                        item.optString("trackName", null),
+                        item.optString("artistName", null),
+                        item.optString("albumName", null),
+                        item.optInt("duration", 0),
+                        item.optBoolean("instrumental", false),
+                        item.optString("plainLyrics", null),
+                        item.optString("syncedLyrics", null)
                 ));
             }
 
