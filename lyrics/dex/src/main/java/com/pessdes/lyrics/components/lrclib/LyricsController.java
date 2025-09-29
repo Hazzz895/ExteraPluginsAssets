@@ -135,7 +135,7 @@ public class LyricsController {
 
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration) {
-        return getLyrics(trackName, artistName, trackDuration, false);
+        return getLyrics(trackName, artistName, trackDuration, true);
     }
 
     @Nullable
@@ -149,7 +149,7 @@ public class LyricsController {
                 }
             }
 
-            if (result == null) {
+            if (!fromCache || result == null) {
                 result = getLyricsInternal(trackName, artistName, trackDuration);
                 if (result != null) {
                     cacheLyrics(trackName, artistName, trackDuration, result);
