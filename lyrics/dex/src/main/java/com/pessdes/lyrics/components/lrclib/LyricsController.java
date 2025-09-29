@@ -2,11 +2,13 @@ package com.pessdes.lyrics.components.lrclib;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
+import com.pessdes.lyrics.ui.LyricsActivity;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.telegram.ui.ActionBar.BaseFragment;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -67,10 +69,9 @@ public class LyricsController {
     private final String BASE_URL = "https://lrclib.net/api/search";
 
     private URL getRequestUrl(String trackName, String artistName) throws UnsupportedEncodingException, MalformedURLException {
-
         return new URL(BASE_URL + "?track_name=" + URLEncoder.encode(trackName, "UTF-8") + "&artist_name=" + URLEncoder.encode(artistName, "UTF-8"));
     }
-    private Lyrics getLyricsInternal(String trackName, String artistName, int trackDuration) throws JSONException, IOException {
+    private Lyrics getLyricsInternal(String trackName, String artistName, int trackDuration) {
         try {
             HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
             con.setRequestMethod("GET");
@@ -120,7 +121,7 @@ public class LyricsController {
             return result;
         }
         catch (Exception ex) {
-            throw ex;
+            return null;
         }
     }
 

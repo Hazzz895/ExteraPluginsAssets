@@ -19,8 +19,6 @@ public class Lyrics {
     @Nullable
     public List<SyncedLyricsLine> syncedLyrics;
 
-    @Nullable
-    public Throwable exception;
     public Lyrics(
             int id,
             @NotNull String trackName,
