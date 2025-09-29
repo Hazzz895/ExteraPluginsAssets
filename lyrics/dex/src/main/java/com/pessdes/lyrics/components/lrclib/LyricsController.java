@@ -59,15 +59,15 @@ public class LyricsController {
         return result;
     }
 
-    private String getCacheKey(String trackName, String artistName, long trackDuration) {
+    private String getCacheKey(String trackName, String artistName, double trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
 
-    private Lyrics getCachedLyrics(String trackName, String artistName, long trackDuration) {
+    private Lyrics getCachedLyrics(String trackName, String artistName, double trackDuration) {
         return cachedLyrics.get(getCacheKey(trackName, artistName, trackDuration));
     }
 
-    private void cacheLyrics(String trackName, String artistName, long trackDuration, Lyrics lyrics) {
+    private void cacheLyrics(String trackName, String artistName, double trackDuration, Lyrics lyrics) {
         cachedLyrics.put(getCacheKey(trackName, artistName, trackDuration), lyrics);
     }
 
@@ -77,7 +77,7 @@ public class LyricsController {
         return new URL(BASE_URL + "?track_name=" + URLEncoder.encode(trackName, "UTF-8") + "&artist_name=" + URLEncoder.encode(artistName, "UTF-8"));
     }
     @SuppressLint("DefaultLocale")
-    private Lyrics getLyricsInternal(String trackName, String artistName, long trackDuration) {
+    private Lyrics getLyricsInternal(String trackName, String artistName, double trackDuration) {
         try {
             HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
             LyricsController.log("Sending request to: " + con.getURL());
@@ -103,13 +103,13 @@ public class LyricsController {
             for (int i = 0; i < json.length(); i++) {
                 var item = json.getJSONObject(i);
                 if (item.optBoolean("instrumental", false)) continue;
-                if (trackDuration > 0 && item.getInt("duration") != trackDuration && item.optString("syncedLyrics", null) != null) return null;
+                if (trackDuration > 0 && item.optDouble("duration", 0) != trackDuration && item.optString("syncedLyrics", null) != null) return null;
                 preResult.add(new Lyrics(
                         item.optInt("id", 0),
                         item.optString("trackName", null),
                         item.optString("artistName", null),
                         item.optString("albumName", null),
-                        item.optInt("duration", 0),
+                        item.optDouble("duration", 0),
                         item.optBoolean("instrumental", false),
                         item.optString("plainLyrics", null),
                         item.optString("syncedLyrics", null)
@@ -133,12 +133,12 @@ public class LyricsController {
     }
 
     @Nullable
-    public Lyrics getLyrics(@NotNull String trackName, String artistName, long trackDuration) {
+    public Lyrics getLyrics(@NotNull String trackName, String artistName, double trackDuration) {
         return getLyrics(trackName, artistName, trackDuration, true);
     }
 
     @Nullable
-    public Lyrics getLyrics(@NotNull String trackName, String artistName, long trackDuration, boolean fromCache) {
+    public Lyrics getLyrics(@NotNull String trackName, String artistName, double trackDuration, boolean fromCache) {
         try {
             log("Getting lyrics for: " + trackName + " - " + artistName + "(" + trackDuration + ")");
             Lyrics result = null;

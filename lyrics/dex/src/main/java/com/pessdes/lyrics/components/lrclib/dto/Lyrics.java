@@ -17,7 +17,7 @@ public class Lyrics {
     public String trackName;
     public String artistName;
     public String albumName;
-    public int duration;
+    public double duration;
     public boolean instrumental;
     public String plainLyrics;
     public String plainSyncedLyrics;
@@ -29,7 +29,7 @@ public class Lyrics {
             @NotNull String trackName,
             String artistName,
             String albumName,
-            int duration,
+            double duration,
             boolean instrumental,
             String plainLyrics,
             String plainSyncedLyrics
