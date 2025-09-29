@@ -157,7 +157,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
         var title = messageObject.getMusicTitle();
         var authors = messageObject.getMusicAuthor();
-        var duration = (int)messageObject.getDuration();
+        var duration = MediaController.getInstance().getDuration();
         Utilities.globalQueue.postRunnable(() -> {
             lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration, true);
             if (lastLyrics != null) {

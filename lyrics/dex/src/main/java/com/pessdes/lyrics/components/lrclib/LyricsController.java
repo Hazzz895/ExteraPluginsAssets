@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.components.lrclib;
 
+import android.annotation.SuppressLint;
+
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import com.pessdes.lyrics.ui.LyricsActivity;
@@ -57,15 +59,15 @@ public class LyricsController {
         return result;
     }
 
-    private String getCacheKey(String trackName, String artistName, int trackDuration) {
+    private String getCacheKey(String trackName, String artistName, long trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
 
-    private Lyrics getCachedLyrics(String trackName, String artistName, int trackDuration) {
+    private Lyrics getCachedLyrics(String trackName, String artistName, long trackDuration) {
         return cachedLyrics.get(getCacheKey(trackName, artistName, trackDuration));
     }
 
-    private void cacheLyrics(String trackName, String artistName, int trackDuration, Lyrics lyrics) {
+    private void cacheLyrics(String trackName, String artistName, long trackDuration, Lyrics lyrics) {
         cachedLyrics.put(getCacheKey(trackName, artistName, trackDuration), lyrics);
     }
 
@@ -74,7 +76,8 @@ public class LyricsController {
     private URL getRequestUrl(String trackName, String artistName) throws UnsupportedEncodingException, MalformedURLException {
         return new URL(BASE_URL + "?track_name=" + URLEncoder.encode(trackName, "UTF-8") + "&artist_name=" + URLEncoder.encode(artistName, "UTF-8"));
     }
-    private Lyrics getLyricsInternal(String trackName, String artistName, int trackDuration) {
+    @SuppressLint("DefaultLocale")
+    private Lyrics getLyricsInternal(String trackName, String artistName, long trackDuration) {
         try {
             HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
             LyricsController.log("Sending request to: " + con.getURL());
@@ -90,9 +93,8 @@ public class LyricsController {
             }
             in.close();
             con.disconnect();
-            LyricsController.log("Got response: " + response);
             var json = new JSONArray(String.valueOf(response));
-
+            LyricsController.log(String.format("Got %d results", json.length()));
             if (json.length() == 0) {
                 return null;
             }
@@ -131,13 +133,14 @@ public class LyricsController {
     }
 
     @Nullable
-    public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration) {
+    public Lyrics getLyrics(@NotNull String trackName, String artistName, long trackDuration) {
         return getLyrics(trackName, artistName, trackDuration, true);
     }
 
     @Nullable
-    public Lyrics getLyrics(@NotNull String trackName, String artistName, int trackDuration, boolean fromCache) {
+    public Lyrics getLyrics(@NotNull String trackName, String artistName, long trackDuration, boolean fromCache) {
         try {
+            log("Getting lyrics for: " + trackName + " - " + artistName + "(" + trackDuration + ")");
             Lyrics result = null;
             if (fromCache) {
                 var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
