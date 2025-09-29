@@ -15,9 +15,11 @@ import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.ui.components.LyricsScroller;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
@@ -156,10 +158,12 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         var title = messageObject.getMusicTitle();
         var authors = messageObject.getMusicAuthor();
         var duration = (int)messageObject.getDuration();
-        lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
-        if (lastLyrics != null) {
-            lyricsScroller.setLyrics(lastLyrics);
-        }
+        Utilities.globalQueue.postRunnable(() -> {
+            lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
+            if (lastLyrics != null) {
+                AndroidUtilities.runOnUIThread(() -> lyricsScroller.setLyrics(lastLyrics));
+            }
+        });
     }
 
     private void onMusicStateChanged() {
