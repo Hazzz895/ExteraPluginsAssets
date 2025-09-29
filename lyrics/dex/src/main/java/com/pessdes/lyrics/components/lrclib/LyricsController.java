@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import com.pessdes.lyrics.ui.LyricsActivity;
+import com.pessdes.lyrics.ui.components.LyricsScroller;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +81,7 @@ public class LyricsController {
     private Lyrics getLyricsInternal(String trackName, String artistName, double trackDuration) {
         try {
             HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
-            LyricsController.log("Sending request to: " + con.getURL());
+            log("Sending request to: " + con.getURL());
             con.setRequestMethod("GET");
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(con.getInputStream())
@@ -94,13 +95,14 @@ public class LyricsController {
             in.close();
             con.disconnect();
             var json = new JSONArray(String.valueOf(response));
-            LyricsController.log(String.format("Got %d results", json.length()));
+            log(String.format("Got %d results", json.length()));
             if (json.length() == 0) {
                 return null;
             }
 
             var preResult = new ArrayList<Lyrics>();
             for (int i = 0; i < json.length(); i++) {
+                log("Iteration #" + i);
                 var item = json.getJSONObject(i);
                 if (item.optBoolean("instrumental", false)) continue;
                 if (trackDuration > 0 && Math.round(item.optDouble("duration", 0)) != Math.round(trackDuration) && item.optString("syncedLyrics", null) != null) continue;
@@ -115,15 +117,21 @@ public class LyricsController {
                         item.optString("syncedLyrics", null)
                 ));
             }
-
+            log("done!");
+            if (preResult.isEmpty()) {
+                log("empty");
+                return null;
+            }
+            log("Selecting result");
             Lyrics result = preResult.get(0);
             for (int i = 0; i < preResult.size() && result.syncedLyrics == null; i++) {
+                log("Iteration #" + i);
                 if (preResult.get(i).syncedLyrics != null) {
                     result = preResult.get(i);
                     break;
                 }
             }
-
+            log("done!");
             return result;
         }
         catch (Exception ex) {
@@ -156,6 +164,9 @@ public class LyricsController {
                     log("Got lyrics form LRClib");
                     cacheLyrics(trackName, artistName, trackDuration, result);
                     log("Successful cached");
+                }
+                else {
+                    log("Lyrics not found");
                 }
             }
             log(result != null ? ("Got lyrics: " + result) : "Lyrics not found");
