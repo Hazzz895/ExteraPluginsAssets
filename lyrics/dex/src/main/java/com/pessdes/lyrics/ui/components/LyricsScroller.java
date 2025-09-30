@@ -34,9 +34,7 @@ public class LyricsScroller extends RecyclerListView {
         addItemDecoration(new ItemDecoration() {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull State state) {
-                if (parent.getChildAdapterPosition(view) != parent.getAdapter().getItemCount() - 1) {
-                    outRect.bottom = verticalSpaceHeight;
-                }
+                outRect.bottom = verticalSpaceHeight;
             }
         });
     }
@@ -71,8 +69,8 @@ public class LyricsScroller extends RecyclerListView {
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return TYPE_TIMER;
-            else if (position > 0 && position < getItemCount()) return TYPE_LYRICS;
-            else if (position == getItemCount()) return TYPE_FOOTER;
+            else if (position > 0) return TYPE_LYRICS;
+            //else if (position == getItemCount()) return TYPE_FOOTER; # TODO: implement footer
             else return -1;
         }
 
@@ -100,7 +98,7 @@ public class LyricsScroller extends RecyclerListView {
             if (holder.getItemViewType() == TYPE_LYRICS) {
                 assert lyrics.syncedLyrics != null;
                 LyricsCell cell = (LyricsCell) holder.itemView;
-                cell.setText(lyrics.syncedLyrics.get(position+1).text, false);
+                cell.setText(lyrics.syncedLyrics.get(position-1).text, false);
             }
             else if (holder.getItemViewType() == TYPE_TIMER) {
                 TimerCell cell = (TimerCell) holder.itemView;
