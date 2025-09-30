@@ -45,13 +45,21 @@ public class LyricsScroller extends RecyclerListView {
         return lyrics;
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     public void setLyrics(Lyrics lyrics) {
         boolean isNew = this.lyrics != lyrics;
         this.lyrics = lyrics;
         if (isNew && getAdapter() != null) {
             log("updating");
-            ((Adapter) getAdapter()).setData(lyrics);
+            RecyclerView.Adapter<?> adapterFromView = getAdapter();
+
+            log("Class from getAdapter(): " + adapterFromView.getClass().getName());
+
+            if (adapterFromView instanceof Adapter) {
+                log("Cast successful, calling setData()");
+                ((Adapter) adapterFromView).setData(lyrics);
+            } else {
+                log("ERROR: getAdapter() returned an unexpected type!");
+            }
         }
     }
 
