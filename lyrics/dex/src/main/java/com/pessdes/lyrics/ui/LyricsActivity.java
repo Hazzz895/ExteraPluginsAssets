@@ -167,7 +167,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
             log("got lyrics: " + (lastLyrics != null));
             if (lastLyrics != null) {
-                log("updating lyrics");
+                log("updating lyrics: " + (lastLyrics.syncedLyrics != null ? lastLyrics.syncedLyrics.size() : "null"));
                 AndroidUtilities.runOnUIThread(() -> lyricsScroller.setLyrics(lastLyrics));
             }
         });
