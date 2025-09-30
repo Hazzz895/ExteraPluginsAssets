@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.ui;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -163,7 +165,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
         Utilities.globalQueue.postRunnable(() -> {
             lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
+            log("got lyrics: " + (lastLyrics != null));
             if (lastLyrics != null) {
+                log("updating lyrics");
                 AndroidUtilities.runOnUIThread(() -> lyricsScroller.setLyrics(lastLyrics));
             }
         });
