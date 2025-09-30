@@ -26,12 +26,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LyricsController {
     private static final LyricsController instance = new LyricsController();
-    private final Map<String, Lyrics> cachedLyrics = new HashMap<>();
+
+    private final Map<String, CompletableFuture<Lyrics>> lyricsFutures = new ConcurrentHashMap<>();
+
+    private final ExecutorService networkExecutor = Executors.newCachedThreadPool();
+
     public static LyricsController getInstance() {
         return instance == null ? new LyricsController() : instance;
     }
@@ -63,15 +71,6 @@ public class LyricsController {
     private String getCacheKey(String trackName, String artistName, double trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
-
-    private Lyrics getCachedLyrics(String trackName, String artistName, double trackDuration) {
-        return cachedLyrics.get(getCacheKey(trackName, artistName, trackDuration));
-    }
-
-    private void cacheLyrics(String trackName, String artistName, double trackDuration, Lyrics lyrics) {
-        cachedLyrics.put(getCacheKey(trackName, artistName, trackDuration), lyrics);
-    }
-
     private final String BASE_URL = "https://lrclib.net/api/search";
 
     private URL getRequestUrl(String trackName, String artistName) throws UnsupportedEncodingException, MalformedURLException {
@@ -102,7 +101,6 @@ public class LyricsController {
 
             var preResult = new ArrayList<Lyrics>();
             for (int i = 0; i < json.length(); i++) {
-                log("Iteration #" + i);
                 var item = json.getJSONObject(i);
                 if (item.optBoolean("instrumental", false)) continue;
                 if (trackDuration > 0 && Math.round(item.optDouble("duration", 0)) != Math.round(trackDuration) && item.optString("syncedLyrics", null) != null) continue;
@@ -117,21 +115,16 @@ public class LyricsController {
                         item.optString("syncedLyrics", null)
                 ));
             }
-            log("done!");
             if (preResult.isEmpty()) {
-                log("empty");
                 return null;
             }
-            log("Selecting result");
             Lyrics result = preResult.get(0);
             for (int i = 0; i < preResult.size() && result.syncedLyrics == null; i++) {
-                log("Iteration #" + i);
                 if (preResult.get(i).syncedLyrics != null) {
                     result = preResult.get(i);
                     break;
                 }
             }
-            log("done!");
             return result;
         }
         catch (Exception ex) {
@@ -142,41 +135,22 @@ public class LyricsController {
 
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, double trackDuration) {
-        return getLyrics(trackName, artistName, trackDuration, true);
-    }
+        String key = getCacheKey(trackName, artistName, trackDuration);
 
-    @Nullable
-    public Lyrics getLyrics(@NotNull String trackName, String artistName, double trackDuration, boolean fromCache) {
+        CompletableFuture<Lyrics> future = lyricsFutures.computeIfAbsent(key, k -> CompletableFuture.supplyAsync(() ->
+                getLyricsInternal(trackName, artistName, trackDuration), networkExecutor));
+
         try {
-            log("Getting lyrics for: " + trackName + " - " + artistName + "(" + trackDuration + ")");
-            Lyrics result = null;
-            if (fromCache) {
-                var cachedLyrics = getCachedLyrics(trackName, artistName, trackDuration);
-                if (cachedLyrics != null) {
-                    log("Lyrics found in cache!");
-                    result = cachedLyrics;
-                }
-            }
-
-            if (!fromCache || result == null) {
-                result = getLyricsInternal(trackName, artistName, trackDuration);
-                if (result != null) {
-                    log("Got lyrics form LRClib");
-                    cacheLyrics(trackName, artistName, trackDuration, result);
-                    log("Successful cached");
-                }
-                else {
-                    log("Lyrics not found");
-                }
-            }
-            log(result != null ? ("Got lyrics: " + result) : "Lyrics not found");
+            Lyrics result = future.get();
+            log(result != null ? "Got lyrics for: " + key : "Lyrics not found for: " + key);
             return result;
-        }
-        catch (Exception ex) {
-            log("Exception in getLyrics: " + ex.getMessage());
+        } catch (Exception e) {
+            log("Exception while waiting for lyrics future: " + e.getMessage());
+            lyricsFutures.remove(key, future);
             return null;
         }
     }
+
 
     public LyricsActivity presentLyricsActivity(BaseFragment baseFragment) {
         var activity = new LyricsActivity();
