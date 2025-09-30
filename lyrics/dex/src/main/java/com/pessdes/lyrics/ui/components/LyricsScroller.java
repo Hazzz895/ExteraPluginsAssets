@@ -49,6 +49,14 @@ public class LyricsScroller extends RecyclerListView {
         return lyrics;
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        log("onMeasure: width=" + width + ", height=" + height);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     public void setLyrics(Lyrics lyrics) {
         boolean isNew = this.lyrics != lyrics;
