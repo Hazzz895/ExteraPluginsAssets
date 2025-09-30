@@ -24,6 +24,7 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.LayoutHelper;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final int[] notificationIds = new int[] {
@@ -66,6 +67,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context, null);
+        layout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         return fragmentView;
     }
@@ -159,7 +161,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         var authors = messageObject.getMusicAuthor();
         var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
         Utilities.globalQueue.postRunnable(() -> {
-            lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration, true);
+            lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
             if (lastLyrics != null) {
                 AndroidUtilities.runOnUIThread(() -> lyricsScroller.setLyrics(lastLyrics));
             }
