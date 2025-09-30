@@ -167,7 +167,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
             log("got lyrics: " + (lastLyrics != null));
             if (lastLyrics != null) {
-                lyricsScroller.setLyrics(lastLyrics); // Этот метод нужно вернуть/создать
+                AndroidUtilities.runOnUIThread(() -> {
+                    lyricsScroller.setLyrics(lastLyrics); // Этот метод нужно вернуть/создать
 
                 // Теперь решаем, что делать с адаптером
                 if (lyricsScroller.getAdapter() == null) {
@@ -180,6 +181,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     log("Adapter exists. Notifying data set changed.");
                     lyricsScroller.getAdapter().notifyDataSetChanged();
                 }
+            });
             }
         });
     }
