@@ -47,7 +47,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_close_white);
         actionBar.setAllowOverlayTitle(true);
-        updateTitle();
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -68,7 +67,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         lyricsScroller = new LyricsScroller(context, null);
         layout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
-
+        updateTitle();
+        
         return fragmentView;
     }
 
@@ -100,6 +100,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private void updateTitle() {
         updateTitle(MediaController.getInstance().getPlayingMessageObject() != null);
     }
+
     private void updateTitle(boolean loaded) {
         String title = null;
         String subTitle = null;
