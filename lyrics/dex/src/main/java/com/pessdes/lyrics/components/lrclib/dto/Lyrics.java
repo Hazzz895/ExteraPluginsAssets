@@ -46,11 +46,4 @@ public class Lyrics {
             this.syncedLyrics = LyricsController.getInstance().parseSyncedLyrics(plainSyncedLyrics);
         }
     }
-
-    @SuppressLint("DefaultLocale")
-    @NonNull
-    @Override
-    public String toString() {
-        return String.format("Lyrics{id=%d,\ntrackName='%s',\nartistName='%s',\nalbumName='%s',\nduration=%d,\ninstrumental=%b,\nplainLyrics='%s',\nplainSyncedLyrics='%s'}", id, trackName, artistName, albumName, duration, instrumental, Util.trimStringWithEllipsis(plainLyrics, 25), Util.trimStringWithEllipsis(plainSyncedLyrics, 25));
-    }
 }
