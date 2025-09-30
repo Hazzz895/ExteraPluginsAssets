@@ -67,7 +67,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         gradient = getLayerDrawable(bgColor);
         layout.setForeground(gradient);
 
-        lyricsScroller = new LyricsScroller(context, null);
+        lyricsScroller = new LyricsScroller(context);
         layout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         updateTitle();
 
@@ -167,8 +167,19 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
             log("got lyrics: " + (lastLyrics != null));
             if (lastLyrics != null) {
-                log("updating lyrics: " + (lastLyrics.syncedLyrics != null ? lastLyrics.syncedLyrics.size() : "null"));
-                AndroidUtilities.runOnUIThread(() -> lyricsScroller.setLyrics(lastLyrics));
+                lyricsScroller.setLyrics(lastLyrics); // Этот метод нужно вернуть/создать
+
+                // Теперь решаем, что делать с адаптером
+                if (lyricsScroller.getAdapter() == null) {
+                    // Адаптера еще нет. Это первая загрузка.
+                    // Создаем и устанавливаем его С УЖЕ ГОТОВЫМИ ДАННЫМИ.
+                    log("Adapter is null. Creating and setting a new one.");
+                    lyricsScroller.setAdapter(lyricsScroller.new Adapter(getParentActivity()));
+                } else {
+                    // Адаптер уже есть (сменился трек), просто уведомляем его.
+                    log("Adapter exists. Notifying data set changed.");
+                    lyricsScroller.getAdapter().notifyDataSetChanged();
+                }
             }
         });
     }

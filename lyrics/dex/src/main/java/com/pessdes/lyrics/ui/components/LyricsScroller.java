@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
@@ -26,17 +27,15 @@ public class LyricsScroller extends RecyclerListView {
 
     private Lyrics lyrics;
     private float speed;
-    private final Adapter adapter;
-
     private final int verticalSpaceHeight = AndroidUtilities.dp(36);
 
     private boolean hasPendingLyricsUpdate = false;
 
-    public LyricsScroller(Context context, Lyrics lyrics) {
+    public LyricsScroller(Context context) {
         super(context);
-        this.lyrics = lyrics;
-        adapter = new Adapter(context);
-        setAdapter(adapter);
+        this.lyrics = null; // Начинаем с null
+        // LayoutManager и ItemDecoration можно оставить здесь
+        setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         addItemDecoration(new ItemDecoration() {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull State state) {
@@ -57,40 +56,8 @@ public class LyricsScroller extends RecyclerListView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     public void setLyrics(Lyrics lyrics) {
-        boolean isNew = this.lyrics != lyrics;
         this.lyrics = lyrics;
-        if (isNew) {
-            log("setLyrics called.");
-            // Сначала обновляем данные в адаптере
-            adapter.setData(lyrics);
-
-            // А ТЕПЕРЬ САМОЕ ГЛАВНОЕ:
-            // Проверяем, есть ли что показывать.
-            if (lyrics != null && lyrics.syncedLyrics != null && !lyrics.syncedLyrics.isEmpty()) {
-                // Если есть данные, делаем View видимым!
-                log("Lyrics are available. Setting visibility to VISIBLE.");
-                setVisibility(View.VISIBLE);
-            } else {
-                // Если данных нет, прячем View.
-                log("No lyrics available. Setting visibility to GONE.");
-                setVisibility(View.GONE);
-            }
-        }
-    }
-
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        log("onAttachedToWindow called.");
-        // Когда View прикрепилось, проверяем, не ждет ли нас отложенное обновление
-        if (hasPendingLyricsUpdate) {
-            log("Pending update found. Updating adapter now.");
-            hasPendingLyricsUpdate = false; // Сбрасываем флаг
-            adapter.setData(this.lyrics); // Выполняем обновление
-        }
     }
 
 
