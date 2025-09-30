@@ -62,18 +62,24 @@ public class LyricsScroller extends RecyclerListView {
         boolean isNew = this.lyrics != lyrics;
         this.lyrics = lyrics;
         if (isNew) {
-            log("setLyrics called. Checking if attached to window...");
-            if (isAttachedToWindow()) {
-                // Если View уже на экране, обновляем сразу
-                log("Is attached. Updating adapter now.");
-                adapter.setData(lyrics);
+            log("setLyrics called.");
+            // Сначала обновляем данные в адаптере
+            adapter.setData(lyrics);
+
+            // А ТЕПЕРЬ САМОЕ ГЛАВНОЕ:
+            // Проверяем, есть ли что показывать.
+            if (lyrics != null && lyrics.syncedLyrics != null && !lyrics.syncedLyrics.isEmpty()) {
+                // Если есть данные, делаем View видимым!
+                log("Lyrics are available. Setting visibility to VISIBLE.");
+                setVisibility(View.VISIBLE);
             } else {
-                // Если еще нет, просто ставим флаг
-                log("Is NOT attached. Setting pending update flag.");
-                hasPendingLyricsUpdate = true;
+                // Если данных нет, прячем View.
+                log("No lyrics available. Setting visibility to GONE.");
+                setVisibility(View.GONE);
             }
         }
     }
+
 
     @Override
     protected void onAttachedToWindow() {
