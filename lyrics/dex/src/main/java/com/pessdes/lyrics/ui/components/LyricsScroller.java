@@ -127,10 +127,18 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public int getItemCount() {
-            if (adapterLyrics == null || adapterLyrics.syncedLyrics == null) {
+            if (adapterLyrics == null) {
+                log("getItemCount: adapterLyrics is NULL. Returning 0.");
                 return 0;
             }
-            return adapterLyrics.syncedLyrics.size() + 1;
+            if (adapterLyrics.syncedLyrics == null) {
+                log("getItemCount: adapterLyrics.syncedLyrics is NULL. Returning 0.");
+                return 0;
+            }
+
+            int count = adapterLyrics.syncedLyrics.size() + 1;
+            log("getItemCount: adapterLyrics.syncedLyrics.size() = " + adapterLyrics.syncedLyrics.size() + ". Returning " + count);
+            return count;
         }
     }
 }
