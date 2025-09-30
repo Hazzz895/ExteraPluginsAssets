@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.ui.components;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -95,6 +97,7 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            log("binding: " + position);
             if (holder.getItemViewType() == TYPE_LYRICS) {
                 assert lyrics.syncedLyrics != null;
                 LyricsCell cell = (LyricsCell) holder.itemView;
