@@ -47,8 +47,10 @@ public class LyricsScroller extends RecyclerListView {
 
     @SuppressLint("NotifyDataSetChanged")
     public void setLyrics(Lyrics lyrics) {
+        boolean isNew = this.lyrics != lyrics;
         this.lyrics = lyrics;
-        if (getAdapter() != null) {
+        if (isNew && getAdapter() != null) {
+            log("updating");
             getAdapter().notifyDataSetChanged();
         }
     }
@@ -92,6 +94,7 @@ public class LyricsScroller extends RecyclerListView {
             else {
                 view = null;
             }
+            log("creating: " + viewType);
             return new RecyclerListView.Holder(view);
         }
 

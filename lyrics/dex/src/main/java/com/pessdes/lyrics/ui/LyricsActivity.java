@@ -68,7 +68,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         lyricsScroller = new LyricsScroller(context, null);
         layout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         updateTitle();
-        
+
         return fragmentView;
     }
 
