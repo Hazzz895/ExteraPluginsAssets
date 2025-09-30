@@ -26,13 +26,17 @@ public class LyricsScroller extends RecyclerListView {
 
     private Lyrics lyrics;
     private float speed;
+    private final Adapter adapter;
 
     private final int verticalSpaceHeight = AndroidUtilities.dp(36);
+
+    private boolean hasPendingLyricsUpdate = false;
 
     public LyricsScroller(Context context, Lyrics lyrics) {
         super(context);
         this.lyrics = lyrics;
-        setAdapter(new Adapter(context));
+        adapter = new Adapter(context);
+        setAdapter(adapter);
         addItemDecoration(new ItemDecoration() {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull State state) {
@@ -45,23 +49,36 @@ public class LyricsScroller extends RecyclerListView {
         return lyrics;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void setLyrics(Lyrics lyrics) {
         boolean isNew = this.lyrics != lyrics;
         this.lyrics = lyrics;
-        if (isNew && getAdapter() != null) {
-            log("updating");
-            RecyclerView.Adapter<?> adapterFromView = getAdapter();
-
-            log("Class from getAdapter(): " + adapterFromView.getClass().getName());
-
-            if (adapterFromView instanceof Adapter) {
-                log("Cast successful, calling setData()");
-                ((Adapter) adapterFromView).setData(lyrics);
+        if (isNew) {
+            log("setLyrics called. Checking if attached to window...");
+            if (isAttachedToWindow()) {
+                // Если View уже на экране, обновляем сразу
+                log("Is attached. Updating adapter now.");
+                adapter.setData(lyrics);
             } else {
-                log("ERROR: getAdapter() returned an unexpected type!");
+                // Если еще нет, просто ставим флаг
+                log("Is NOT attached. Setting pending update flag.");
+                hasPendingLyricsUpdate = true;
             }
         }
     }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        log("onAttachedToWindow called.");
+        // Когда View прикрепилось, проверяем, не ждет ли нас отложенное обновление
+        if (hasPendingLyricsUpdate) {
+            log("Pending update found. Updating adapter now.");
+            hasPendingLyricsUpdate = false; // Сбрасываем флаг
+            adapter.setData(this.lyrics); // Выполняем обновление
+        }
+    }
+
 
     public void setSpeed(float speed) {
         this.speed = speed;
