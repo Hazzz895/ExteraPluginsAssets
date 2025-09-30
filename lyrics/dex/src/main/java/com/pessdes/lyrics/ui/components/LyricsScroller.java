@@ -51,7 +51,7 @@ public class LyricsScroller extends RecyclerListView {
         this.lyrics = lyrics;
         if (isNew && getAdapter() != null) {
             log("updating");
-            getAdapter().notifyDataSetChanged();
+            ((Adapter) getAdapter()).setData(lyrics);
         }
     }
 
@@ -65,16 +65,24 @@ public class LyricsScroller extends RecyclerListView {
 
     public class Adapter extends RecyclerView.Adapter {
         private final Context context;
+        private Lyrics adapterLyrics;
 
         public Adapter(Context context) {
             this.context = context;
+            this.adapterLyrics = LyricsScroller.this.lyrics;
+        }
+
+        @SuppressLint("NotifyDataSetChanged")
+        public void setData(Lyrics newLyrics) {
+            this.adapterLyrics = newLyrics;
+            log("Adapter received new data, notifying change.");
+            notifyDataSetChanged();
         }
 
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return TYPE_TIMER;
             else if (position > 0) return TYPE_LYRICS;
-            //else if (position == getItemCount()) return TYPE_FOOTER; # TODO: implement footer
             else return -1;
         }
 
@@ -88,9 +96,6 @@ public class LyricsScroller extends RecyclerListView {
             else if (viewType == TYPE_TIMER) {
                 view = new TimerCell(context, false);
             }
-            else if (viewType == TYPE_FOOTER) {
-                view = null;
-            }
             else {
                 view = null;
             }
@@ -102,9 +107,9 @@ public class LyricsScroller extends RecyclerListView {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             log("binding: " + position);
             if (holder.getItemViewType() == TYPE_LYRICS) {
-                assert lyrics.syncedLyrics != null;
+                assert adapterLyrics.syncedLyrics != null;
                 LyricsCell cell = (LyricsCell) holder.itemView;
-                cell.setText(lyrics.syncedLyrics.get(position-1).text, false);
+                cell.setText(adapterLyrics.syncedLyrics.get(position - 1).text, false);
             }
             else if (holder.getItemViewType() == TYPE_TIMER) {
                 TimerCell cell = (TimerCell) holder.itemView;
@@ -114,8 +119,10 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public int getItemCount() {
-            if (lyrics.syncedLyrics == null) return 0;
-            else return lyrics.syncedLyrics.size() + 1;
+            if (adapterLyrics == null || adapterLyrics.syncedLyrics == null) {
+                return 0;
+            }
+            return adapterLyrics.syncedLyrics.size() + 1;
         }
     }
 }
