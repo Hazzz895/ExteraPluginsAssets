@@ -180,12 +180,12 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         lyricsScroller.setVisibility(View.VISIBLE);
                         lyricsScroller.setLyrics(lastLyrics);
                     } else if (lastLyrics.plainLyrics != null) {
+                        plainLyricsView.setVisibility(View.VISIBLE);
+                        plainLyricsView.setText(lastLyrics.plainLyrics);
                     }
-                    plainLyricsView.setVisibility(View.VISIBLE);
-                    plainLyricsView.setText(lastLyrics.plainLyrics);
                 }
             });
-            });
+        });
     }
 
     private void onMusicStateChanged() {
