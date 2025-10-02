@@ -10,6 +10,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -26,6 +27,7 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
@@ -41,6 +43,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     private LayerDrawable gradient;
     private LyricsScroller lyricsScroller;
+    private TextView plainLyricsView;
 
     private Lyrics lastLyrics;
     private MessageObject lastMessageObject;
@@ -68,9 +71,15 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context);
+        lyricsScroller.setVisibility(View.GONE);
         layout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
-        updateTitle();
 
+        plainLyricsView = new TextView(context);
+        plainLyricsView.setTextColor(Color.WHITE);
+        plainLyricsView.setVisibility(View.GONE);
+        layout.addView(plainLyricsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        updateTitle();
         return fragmentView;
     }
 
@@ -165,25 +174,17 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
         Utilities.globalQueue.postRunnable(() -> {
             lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
-            log("got lyrics: " + (lastLyrics != null));
-            if (lastLyrics != null) {
-                AndroidUtilities.runOnUIThread(() -> {
-                    lyricsScroller.setLyrics(lastLyrics); // Этот метод нужно вернуть/создать
-
-                // Теперь решаем, что делать с адаптером
-                if (lyricsScroller.getAdapter() == null) {
-                    // Адаптера еще нет. Это первая загрузка.
-                    // Создаем и устанавливаем его С УЖЕ ГОТОВЫМИ ДАННЫМИ.
-                    log("Adapter is null. Creating and setting a new one.");
-                    lyricsScroller.setAdapter(lyricsScroller.new Adapter(getParentActivity()));
-                } else {
-                    // Адаптер уже есть (сменился трек), просто уведомляем его.
-                    log("Adapter exists. Notifying data set changed.");
-                    lyricsScroller.getAdapter().notifyDataSetChanged();
+            if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
+                if (lastLyrics.syncedLyrics != null) {
+                    lyricsScroller.setVisibility(View.VISIBLE);
+                    lyricsScroller.setLyrics(lastLyrics);
+                }
+                else if (lastLyrics.plainLyrics != null) {
+                }
+                    plainLyricsView.setVisibility(View.VISIBLE);
+                    plainLyricsView.setText(lastLyrics.plainLyrics);
                 }
             });
-            }
-        });
     }
 
     private void onMusicStateChanged() {

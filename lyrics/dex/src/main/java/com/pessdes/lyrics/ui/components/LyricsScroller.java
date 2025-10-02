@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -18,6 +19,7 @@ import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 import com.pessdes.lyrics.ui.components.cells.TimerCell;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Components.RecyclerListView;
 
 public class LyricsScroller extends RecyclerListView {
@@ -100,7 +102,9 @@ public class LyricsScroller extends RecyclerListView {
                 view = new LyricsCell(context);
             }
             else if (viewType == TYPE_TIMER) {
-                view = new TimerCell(context, false);
+                var textView = new TextView(context);
+                textView.setText("TIMER");
+                view = textView;
             }
             else {
                 view = null;
@@ -115,11 +119,7 @@ public class LyricsScroller extends RecyclerListView {
             if (holder.getItemViewType() == TYPE_LYRICS) {
                 assert adapterLyrics.syncedLyrics != null;
                 LyricsCell cell = (LyricsCell) holder.itemView;
-                cell.setText(adapterLyrics.syncedLyrics.get(position - 1).text, false);
-            }
-            else if (holder.getItemViewType() == TYPE_TIMER) {
-                TimerCell cell = (TimerCell) holder.itemView;
-                cell.startAnimation();
+                cell.setText(adapterLyrics.syncedLyrics.get(position - 1).text);
             }
         }
 
