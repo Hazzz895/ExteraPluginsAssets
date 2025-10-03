@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -160,11 +161,24 @@ public class LyricsController {
         return activity;
     }
 
-    private void logInternal(Object message) {
-        PluginController.getInstance().log(message);
+    final private Class<?> AppUtils;
+    {
+        try {
+            AppUtils = Class.forName("com.exteragram.messenger.utils.AppUtils");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void log(Object message) {
+    private void logInternal(String message) {
+        try {
+            AppUtils.getDeclaredMethod("log", String.class).invoke(null, message);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void log(String message) {
         getInstance().logInternal(message);
     }
 
