@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.ui;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -70,7 +72,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
-        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(32), AndroidUtilities.dp(8), AndroidUtilities.dp(32));
+        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(128), AndroidUtilities.dp(8), AndroidUtilities.dp(128));
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
@@ -140,9 +142,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
                             if (lastLyrics.syncedLyrics != null) {
+                                log("synced lyrics is not null");
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
+                                log("plain lyrics is not null");
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
                             }
