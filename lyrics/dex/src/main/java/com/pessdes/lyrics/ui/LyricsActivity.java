@@ -77,7 +77,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         lyricsLayout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context, null);
-        lyricsScroller.setVisibility(View.GONE);
         lyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         lyricsScroller.setClipToPadding(false);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
