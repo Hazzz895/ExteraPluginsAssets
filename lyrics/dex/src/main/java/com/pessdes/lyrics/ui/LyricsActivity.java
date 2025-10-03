@@ -141,18 +141,16 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                            if (lastLyrics.syncedLyrics != null) {
+                            if (false/*lastLyrics.syncedLyrics != null*/) {
                                 log("synced lyrics is not null");
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
-                                log("plain lyrics is not null");
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
                             }
                         }
                         else {
-                            log("null");
                             lyricsScroller.setVisibility(View.GONE);
                             plainLyricsScroller.setVisibility(View.GONE);
                         }
