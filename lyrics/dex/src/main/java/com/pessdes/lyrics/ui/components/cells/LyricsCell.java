@@ -5,10 +5,13 @@ import android.widget.TextView;
 
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 
+import org.telegram.ui.ActionBar.Theme;
+
 public class LyricsCell extends TextView {
     public LyricsCell(Context context) {
         super(context);
         this.setTypeface(LyricsController.getInstance().getTypeface());
         this.setTextSize(48);
+        this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
     }
 }
