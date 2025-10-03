@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.ui.components.LyricsScroller;
+import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.MediaController;
@@ -79,8 +80,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setVisibility(View.GONE);
 
-        plainLyricsView = new TextView(context);
-        plainLyricsView.setTextColor(Color.WHITE);
+        plainLyricsView = new LyricsCell(context);
 
         plainLyricsScroller.addView(plainLyricsView);
         lyricsLayout.addView(plainLyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
@@ -138,7 +138,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                            if (lastLyrics.syncedLyrics != null) {
+                            if (false/*lastLyrics.syncedLyrics != null*/) {
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
