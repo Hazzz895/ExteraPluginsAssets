@@ -72,19 +72,19 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
-        lyricsLayout.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(8), AndroidUtilities.dp(16), AndroidUtilities.dp(8));
+        lyricsLayout.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context, null);
         lyricsScroller.setVisibility(View.GONE);
-        lyricsScroller.setPadding(0, AndroidUtilities.dp(24), 0, AndroidUtilities.dp(24));
+        lyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         lyricsScroller.setClipToPadding(false);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setVisibility(View.GONE);
-        plainLyricsScroller.setPadding(0, AndroidUtilities.dp(25), 0, AndroidUtilities.dp(25));
+        plainLyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         plainLyricsScroller.setClipToPadding(false);
         plainLyricsView = new PlainLyricsCell(context);
 
@@ -141,14 +141,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
                 final String finalTitle = title;
                 Utilities.globalQueue.postRunnable(() -> {
-                    log("getting");
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
-                    log("got");
                     AndroidUtilities.runOnUIThread(() -> {
-
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                            if (false/*lastLyrics.syncedLyrics != null*/) {
-                                log("synced lyrics is not null");
+                            if (lastLyrics.syncedLyrics != null) {
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {

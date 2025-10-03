@@ -30,6 +30,6 @@ public class PluginController {
     }
 
     public void log(Object message) {
-        getPluginInstance().callAttr("log", message);
+        plugin.callAttr("log", message);
     }
 }
