@@ -73,6 +73,7 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public int getItemViewType(int position) {
+            log("viewtype");
             if (position == 0) return TYPE_TIMER;
             else if (position > 0) return TYPE_LYRICS;
                 //else if (position == getItemCount()) return TYPE_FOOTER; # TODO: implement footer

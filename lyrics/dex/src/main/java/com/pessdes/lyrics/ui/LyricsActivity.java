@@ -70,7 +70,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
-        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
+        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(32), AndroidUtilities.dp(8), AndroidUtilities.dp(32));
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
@@ -95,7 +95,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @NonNull
     private static LayerDrawable getLayerDrawable(int bgColor) {
-        final int gradientHeight = AndroidUtilities.dp(128);
+        final int gradientHeight = AndroidUtilities.dp(64);
 
         GradientDrawable topGradient = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
@@ -139,7 +139,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                            if (false/*lastLyrics.syncedLyrics != null*/) {
+                            if (lastLyrics.syncedLyrics != null) {
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
