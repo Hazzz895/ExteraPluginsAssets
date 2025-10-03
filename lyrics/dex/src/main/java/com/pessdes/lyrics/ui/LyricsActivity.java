@@ -41,6 +41,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             NotificationCenter.messagePlayingGoingToStop
     };
 
+    private FrameLayout lyricsLayout;
     private LayerDrawable gradient;
     private LyricsScroller lyricsScroller;
     private TextView plainLyricsView;
@@ -67,19 +68,23 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         fragmentView = layout = new FrameLayout(context);
         layout.setBackgroundColor(bgColor);
 
+        lyricsLayout = new FrameLayout(context);
         gradient = getLayerDrawable(bgColor);
-        layout.setForeground(gradient);
+        lyricsLayout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context);
         lyricsScroller.setVisibility(View.GONE);
-        layout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsView = new TextView(context);
         plainLyricsView.setTextColor(Color.WHITE);
         plainLyricsView.setVisibility(View.GONE);
-        layout.addView(plainLyricsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        lyricsLayout.addView(plainLyricsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
-        updateTitle();
+        layout.addView(lyricsLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        onMusicLoad();
+
         return fragmentView;
     }
 
@@ -108,11 +113,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         return layerDrawable;
     }
 
-    private void updateTitle() {
-        updateTitle(MediaController.getInstance().getPlayingMessageObject() != null);
-    }
-
-    private void updateTitle(boolean loaded) {
+    private void onMusicLoad() {
+        boolean loaded = MediaController.getInstance().getPlayingMessageObject() != null;
         String title = null;
         String subTitle = null;
         if (!loaded) {
@@ -123,9 +125,29 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             boolean isNew = lastMessageObject != messageObject;
             lastMessageObject = messageObject;
             title = messageObject.getMusicTitle();
-            subTitle = messageObject.getMusicAuthor();
+            var authors = messageObject.getMusicAuthor();
+            subTitle = authors;
             if (isNew) {
-                onMusicLoad();
+                var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
+                final String finalTitle = title;
+                Utilities.globalQueue.postRunnable(() -> {
+                    lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
+                            if (false/*lastLyrics.syncedLyrics != null*/) {
+                                lyricsScroller.setVisibility(View.VISIBLE);
+                                lyricsScroller.setLyrics(lastLyrics);
+                            } else if (lastLyrics.plainLyrics != null) {
+                                plainLyricsView.setVisibility(View.VISIBLE);
+                                plainLyricsView.setText(lastLyrics.plainLyrics);
+                            }
+                        }
+                        else {
+                            lyricsScroller.setVisibility(View.GONE);
+                            plainLyricsView.setVisibility(View.GONE);
+                        }
+                    });
+                });
             }
         }
         actionBar.setTitle(title);
@@ -166,28 +188,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private void onMusicProgressChanged() {
 
     }
-
-    private void onMusicLoad() {
-        MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
-        var title = messageObject.getMusicTitle();
-        var authors = messageObject.getMusicAuthor();
-        var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
-        Utilities.globalQueue.postRunnable(() -> {
-            lastLyrics = LyricsController.getInstance().getLyrics(title, authors, duration);
-            AndroidUtilities.runOnUIThread(() -> {
-                if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                    if (lastLyrics.syncedLyrics != null) {
-                        lyricsScroller.setVisibility(View.VISIBLE);
-                        lyricsScroller.setLyrics(lastLyrics);
-                    } else if (lastLyrics.plainLyrics != null) {
-                        plainLyricsView.setVisibility(View.VISIBLE);
-                        plainLyricsView.setText(lastLyrics.plainLyrics);
-                    }
-                }
-            });
-        });
-    }
-
     private void onMusicStateChanged() {
         if (MediaController.getInstance().isMessagePaused()) {
             onMusicPause();
@@ -201,7 +201,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.messagePlayingDidStart || id == NotificationCenter.messagePlayingPlayStateChanged || id == NotificationCenter.messagePlayingDidReset) {
             MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
-            updateTitle();
+            onMusicLoad();
             if (id == NotificationCenter.messagePlayingPlayStateChanged) {
                 onMusicStateChanged();
             }
