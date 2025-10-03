@@ -83,6 +83,7 @@ public class LyricsScroller extends RecyclerListView {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            log("creating: " + viewType);
             View view;
             if (viewType == TYPE_LYRICS) {
                 view = new SyncedLyricsCell(context);
@@ -96,7 +97,6 @@ public class LyricsScroller extends RecyclerListView {
             else {
                 view = null;
             }
-            log("creating: " + viewType);
             return new RecyclerListView.Holder(view);
         }
 
