@@ -103,35 +103,28 @@ public class LyricsController {
                 return null;
             }
 
-            var preResult = new ArrayList<Lyrics>();
+            Lyrics firstNonInstrumental = null;
             for (int i = 0; i < json.length(); i++) {
                 var item = json.getJSONObject(i);
-                if (item.optBoolean("instrumental", false)) continue;
-                if (trackDuration > 0 && Math.round(item.optDouble("duration", 0)) != Math.round(trackDuration) && item.optString("syncedLyrics", null) != null) continue;
-                preResult.add(new Lyrics(
-                        item.optInt("id", 0),
-                        item.optString("trackName", null),
-                        item.optString("artistName", null),
-                        item.optString("albumName", null),
-                        item.optDouble("duration", 0),
-                        item.optBoolean("instrumental", false),
-                        item.optString("plainLyrics", null),
-                        item.optString("syncedLyrics", null)
-                ));
-            }
-            if (preResult.isEmpty()) {
-                return null;
-            }
-            Lyrics result = preResult.get(0);
-            for (int i = 0; i < preResult.size() && result.syncedLyrics == null; i++) {
-                if (preResult.get(i).syncedLyrics != null) {
-                    result = preResult.get(i);
-                    break;
+
+                if (item.optBoolean("instrumental", false)) {
+                    continue;
+                }
+
+                Lyrics currentLyrics = Lyrics.fromJson(item);
+
+                if (firstNonInstrumental == null) {
+                    firstNonInstrumental = currentLyrics;
+                }
+                
+                if (trackDuration > 0 && Math.round(currentLyrics.duration) == Math.round(trackDuration)) {
+                    return currentLyrics;
                 }
             }
-            return result;
-        }
-        catch (Exception ex) {
+
+            return firstNonInstrumental;
+
+        } catch (Exception ex) {
             log("Exception in getLyricsInternal: " + ex.getMessage());
             return null;
         }

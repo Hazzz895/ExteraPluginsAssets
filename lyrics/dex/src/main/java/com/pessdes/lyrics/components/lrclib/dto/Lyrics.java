@@ -9,6 +9,7 @@ import com.pessdes.lyrics.components.lrclib.LyricsController;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -45,5 +46,18 @@ public class Lyrics {
         if (plainSyncedLyrics != null) {
             this.syncedLyrics = LyricsController.getInstance().parseSyncedLyrics(plainSyncedLyrics);
         }
+    }
+
+    public static Lyrics fromJson(JSONObject item) {
+        return new Lyrics(
+                item.optInt("id", 0),
+                item.optString("trackName", null),
+                item.optString("artistName", null),
+                item.optString("albumName", null),
+                item.optDouble("duration", 0),
+                item.optBoolean("instrumental", false),
+                item.optString("plainLyrics", null),
+                item.optString("syncedLyrics", null)
+        );
     }
 }
