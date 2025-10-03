@@ -83,8 +83,14 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         layout.addView(lyricsLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
+        var testView = new TextView(context);
+        testView.setTextColor(Color.WHITE);
+        testView.setText("IT WORKS!");
+        layout.addView(testView);
+        
         onMusicLoad();
 
+        fragmentView = layout; // ?
         return fragmentView;
     }
 
