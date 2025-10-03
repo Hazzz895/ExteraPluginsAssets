@@ -72,17 +72,20 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
-        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(16), AndroidUtilities.dp(8), AndroidUtilities.dp(16));
+        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context, null);
         lyricsScroller.setVisibility(View.GONE);
+        lyricsScroller.setPadding(0, AndroidUtilities.dp(24), 0, AndroidUtilities.dp(24));
+        lyricsScroller.setClipToPadding(false);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setVisibility(View.GONE);
-
+        plainLyricsScroller.setPadding(0, AndroidUtilities.dp(25), 0, AndroidUtilities.dp(25));
+        plainLyricsScroller.setClipToPadding(false);
         plainLyricsView = new PlainLyricsCell(context);
 
         plainLyricsScroller.addView(plainLyricsView);
