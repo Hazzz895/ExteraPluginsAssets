@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.ui;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -152,6 +154,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsScroller.setVisibility(View.GONE);
                                 lyricsScroller.setAdapter(new LyricsAdapter(getContext(), lastLyrics.syncedLyrics));
+                                log("Lyrics loaded: " + lastLyrics.syncedLyrics.size());
                             } else if (lastLyrics.plainLyrics != null) {
                                 lyricsScroller.setVisibility(View.GONE);
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
@@ -240,6 +243,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         public LyricsAdapter(Context context, List<SyncedLyricsLine> lines) {
             mContext = context;
             lyricsLines = lines;
+            log("ok");
         }
 
         @Override
@@ -270,6 +274,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         @Override
         public int getItemCount() {
+            log("items");
             return lyricsLines != null ? lyricsLines.size() : 0;
         }
     }
