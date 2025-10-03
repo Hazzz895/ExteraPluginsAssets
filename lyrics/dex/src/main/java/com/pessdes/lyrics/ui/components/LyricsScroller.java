@@ -8,10 +8,8 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
@@ -19,7 +17,6 @@ import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 import com.pessdes.lyrics.ui.components.cells.TimerCell;
 
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Components.RecyclerListView;
 
 public class LyricsScroller extends RecyclerListView {
@@ -29,15 +26,13 @@ public class LyricsScroller extends RecyclerListView {
 
     private Lyrics lyrics;
     private float speed;
+
     private final int verticalSpaceHeight = AndroidUtilities.dp(36);
 
-    private boolean hasPendingLyricsUpdate = false;
-
-    public LyricsScroller(Context context) {
+    public LyricsScroller(Context context, Lyrics lyrics) {
         super(context);
-        this.lyrics = null; // Начинаем с null
-        // LayoutManager и ItemDecoration можно оставить здесь
-        setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+        this.lyrics = lyrics;
+        setAdapter(new Adapter(context));
         addItemDecoration(new ItemDecoration() {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull State state) {
@@ -50,18 +45,15 @@ public class LyricsScroller extends RecyclerListView {
         return lyrics;
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int width = MeasureSpec.getSize(widthMeasureSpec);
-        int height = MeasureSpec.getSize(heightMeasureSpec);
-        log("onMeasure: width=" + width + ", height=" + height);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
+    @SuppressLint("NotifyDataSetChanged")
     public void setLyrics(Lyrics lyrics) {
+        boolean isNew = this.lyrics != lyrics;
         this.lyrics = lyrics;
+        if (isNew && getAdapter() != null) {
+            log("updating");
+            getAdapter().notifyDataSetChanged();
+        }
     }
-
 
     public void setSpeed(float speed) {
         this.speed = speed;
@@ -73,24 +65,16 @@ public class LyricsScroller extends RecyclerListView {
 
     public class Adapter extends RecyclerView.Adapter {
         private final Context context;
-        private Lyrics adapterLyrics;
 
         public Adapter(Context context) {
             this.context = context;
-            this.adapterLyrics = LyricsScroller.this.lyrics;
-        }
-
-        @SuppressLint("NotifyDataSetChanged")
-        public void setData(Lyrics newLyrics) {
-            this.adapterLyrics = newLyrics;
-            log("Adapter received new data, notifying change.");
-            notifyDataSetChanged();
         }
 
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return TYPE_TIMER;
             else if (position > 0) return TYPE_LYRICS;
+                //else if (position == getItemCount()) return TYPE_FOOTER; # TODO: implement footer
             else return -1;
         }
 
@@ -102,9 +86,10 @@ public class LyricsScroller extends RecyclerListView {
                 view = new LyricsCell(context);
             }
             else if (viewType == TYPE_TIMER) {
-                var textView = new TextView(context);
-                textView.setText("TIMER");
-                view = textView;
+                view = new TimerCell(context, false);
+            }
+            else if (viewType == TYPE_FOOTER) {
+                view = null;
             }
             else {
                 view = null;
@@ -117,26 +102,20 @@ public class LyricsScroller extends RecyclerListView {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             log("binding: " + position);
             if (holder.getItemViewType() == TYPE_LYRICS) {
-                assert adapterLyrics.syncedLyrics != null;
+                assert lyrics.syncedLyrics != null;
                 LyricsCell cell = (LyricsCell) holder.itemView;
-                cell.setText(adapterLyrics.syncedLyrics.get(position - 1).text);
+                cell.setText(lyrics.syncedLyrics.get(position-1).text);
+            }
+            else if (holder.getItemViewType() == TYPE_TIMER) {
+                TimerCell cell = (TimerCell) holder.itemView;
+                cell.startAnimation();
             }
         }
 
         @Override
         public int getItemCount() {
-            if (adapterLyrics == null) {
-                log("getItemCount: adapterLyrics is NULL. Returning 0.");
-                return 0;
-            }
-            if (adapterLyrics.syncedLyrics == null) {
-                log("getItemCount: adapterLyrics.syncedLyrics is NULL. Returning 0.");
-                return 0;
-            }
-
-            int count = adapterLyrics.syncedLyrics.size() + 1;
-            log("getItemCount: adapterLyrics.syncedLyrics.size() = " + adapterLyrics.syncedLyrics.size() + ". Returning " + count);
-            return count;
+            if (lyrics.syncedLyrics == null) return 0;
+            else return lyrics.syncedLyrics.size() + 1;
         }
     }
 }

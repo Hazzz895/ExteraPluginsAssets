@@ -69,7 +69,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
-        lyricsScroller = new LyricsScroller(context);
+        lyricsScroller = new LyricsScroller(context, null);
         lyricsScroller.setVisibility(View.GONE);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
@@ -80,13 +80,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         layout.addView(lyricsLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
-        var testView = new TextView(context);
-        testView.setTextColor(Color.WHITE);
-        testView.setText("IT WORKS!");
-        layout.addView(testView);
-
         onMusicLoad();
-        
+
         return fragmentView;
     }
 
@@ -136,7 +131,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                            if (false/*lastLyrics.syncedLyrics != null*/) {
+                            if (lastLyrics.syncedLyrics != null) {
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
