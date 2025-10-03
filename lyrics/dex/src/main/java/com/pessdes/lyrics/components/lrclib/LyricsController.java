@@ -161,9 +161,7 @@ public class LyricsController {
     }
 
     private void logInternal(Object message) {
-        if (PluginController.getInstance().getPluginInstance() != null) {
-            PluginController.getInstance().log(message);
-        }
+        PluginController.getInstance().log(message);
     }
 
     public static void log(Object message) {
