@@ -17,6 +17,7 @@ import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.ui.components.LyricsScroller;
 import com.pessdes.lyrics.ui.components.cells.LyricsCell;
+import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.MediaController;
@@ -80,7 +81,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setVisibility(View.GONE);
 
-        plainLyricsView = new LyricsCell(context);
+        plainLyricsView = new PlainLyricsCell(context);
 
         plainLyricsScroller.addView(plainLyricsView);
         lyricsLayout.addView(plainLyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
@@ -94,7 +95,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @NonNull
     private static LayerDrawable getLayerDrawable(int bgColor) {
-        final int gradientHeight = AndroidUtilities.dp(32);
+        final int gradientHeight = AndroidUtilities.dp(128);
 
         GradientDrawable topGradient = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,

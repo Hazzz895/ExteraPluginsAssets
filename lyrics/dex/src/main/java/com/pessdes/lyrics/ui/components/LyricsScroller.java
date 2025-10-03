@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.ui.components.cells.LyricsCell;
+import com.pessdes.lyrics.ui.components.cells.SyncedLyricsCell;
 import com.pessdes.lyrics.ui.components.cells.TimerCell;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -83,7 +84,7 @@ public class LyricsScroller extends RecyclerListView {
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view;
             if (viewType == TYPE_LYRICS) {
-                view = new LyricsCell(context);
+                view = new SyncedLyricsCell(context);
             }
             else if (viewType == TYPE_TIMER) {
                 view = new TimerCell(context, false);
