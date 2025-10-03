@@ -138,8 +138,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
                 final String finalTitle = title;
                 Utilities.globalQueue.postRunnable(() -> {
+                    log("getting");
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
+                    log("got");
                     AndroidUtilities.runOnUIThread(() -> {
+
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
                             if (false/*lastLyrics.syncedLyrics != null*/) {
                                 log("synced lyrics is not null");
