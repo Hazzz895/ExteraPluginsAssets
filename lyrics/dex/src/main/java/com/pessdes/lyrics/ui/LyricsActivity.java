@@ -152,6 +152,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                             }
                         }
                         else {
+                            log("null");
                             lyricsScroller.setVisibility(View.GONE);
                             plainLyricsScroller.setVisibility(View.GONE);
                         }
