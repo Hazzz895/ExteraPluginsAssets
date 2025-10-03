@@ -1,6 +1,7 @@
 package com.pessdes.lyrics.components.lrclib;
 
 import android.annotation.SuppressLint;
+import android.graphics.Typeface;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
@@ -172,5 +173,15 @@ public class LyricsController {
 
     public static void log(Object message) {
         getInstance().logInternal(message);
+    }
+
+    private Typeface typeface;
+
+    public void setTypeface(Typeface typeface) {
+        this.typeface = typeface;
+    }
+
+    public Typeface getTypeface() {
+        return typeface;
     }
 }

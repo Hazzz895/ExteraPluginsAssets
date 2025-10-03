@@ -3,8 +3,12 @@ package com.pessdes.lyrics.ui.components.cells;
 import android.content.Context;
 import android.widget.TextView;
 
+import com.pessdes.lyrics.components.lrclib.LyricsController;
+
 public class LyricsCell extends TextView {
     public LyricsCell(Context context) {
         super(context);
+        this.setTypeface(LyricsController.getInstance().getTypeface());
+        this.setTextSize(48);
     }
 }
