@@ -1,7 +1,5 @@
 package com.pessdes.lyrics.ui;
 
-import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -27,7 +25,6 @@ import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.TextCell;
 import org.telegram.ui.Components.LayoutHelper;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
@@ -64,8 +61,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
 
-        FrameLayout layout;
-        fragmentView = layout = new FrameLayout(context);
+        fragmentView = new FrameLayout(context);
+        FrameLayout layout = (FrameLayout) fragmentView;
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
@@ -87,10 +84,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         testView.setTextColor(Color.WHITE);
         testView.setText("IT WORKS!");
         layout.addView(testView);
-        
-        onMusicLoad();
 
-        fragmentView = layout; // ?
+        onMusicLoad();
+        
         return fragmentView;
     }
 
