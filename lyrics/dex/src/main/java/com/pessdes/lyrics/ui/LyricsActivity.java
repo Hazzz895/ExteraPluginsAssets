@@ -8,6 +8,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,6 +42,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private FrameLayout lyricsLayout;
     private LayerDrawable gradient;
     private LyricsScroller lyricsScroller;
+    private ScrollView plainLyricsScroller;
     private TextView plainLyricsView;
 
     private Lyrics lastLyrics;
@@ -66,6 +68,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
+        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
@@ -73,10 +76,14 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         lyricsScroller.setVisibility(View.GONE);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
+        plainLyricsScroller = new ScrollView(context);
+        plainLyricsScroller.setVisibility(View.GONE);
+
         plainLyricsView = new TextView(context);
         plainLyricsView.setTextColor(Color.WHITE);
-        plainLyricsView.setVisibility(View.GONE);
-        lyricsLayout.addView(plainLyricsView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        plainLyricsScroller.addView(plainLyricsView);
+        lyricsLayout.addView(plainLyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         layout.addView(lyricsLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
@@ -87,7 +94,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @NonNull
     private static LayerDrawable getLayerDrawable(int bgColor) {
-        final int gradientHeight = 36;
+        final int gradientHeight = AndroidUtilities.dp(32);
 
         GradientDrawable topGradient = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
@@ -135,13 +142,13 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 lyricsScroller.setLyrics(lastLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
-                                plainLyricsView.setVisibility(View.VISIBLE);
+                                plainLyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
                             }
                         }
                         else {
                             lyricsScroller.setVisibility(View.GONE);
-                            plainLyricsView.setVisibility(View.GONE);
+                            plainLyricsScroller.setVisibility(View.GONE);
                         }
                     });
                 });
