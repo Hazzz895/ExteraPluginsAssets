@@ -116,8 +116,11 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public int getItemCount() {
-            if (lyrics.syncedLyrics == null) return 0;
-            else return lyrics.syncedLyrics.size() + 1;
+            int count;
+            if (lyrics.syncedLyrics == null) count = 0;
+            else count = lyrics.syncedLyrics.size() + 1;
+            log("itemcount: " + count);
+            return count;
         }
     }
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -170,10 +171,19 @@ public class LyricsController {
         }
     }
 
+    final private Method logMethod;
+    {
+        try {
+            logMethod = AppUtils.getDeclaredMethod("log", String.class);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void logInternal(String message) {
         try {
-            AppUtils.getDeclaredMethod("log", String.class).invoke(null, message);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            logMethod.invoke(null, message);
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
