@@ -72,7 +72,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.setBackgroundColor(bgColor);
 
         lyricsLayout = new FrameLayout(context);
-        lyricsLayout.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8), AndroidUtilities.dp(8));
+        lyricsLayout.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(8), AndroidUtilities.dp(16), AndroidUtilities.dp(8));
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
@@ -100,7 +100,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @NonNull
     private static LayerDrawable getLayerDrawable(int bgColor) {
-        final int gradientHeight = AndroidUtilities.dp(64);
+        final int gradientHeight = AndroidUtilities.dp(32);
 
         GradientDrawable topGradient = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,

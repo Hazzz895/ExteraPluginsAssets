@@ -3,6 +3,7 @@ package com.pessdes.lyrics.components.lrclib;
 import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 
+import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import com.pessdes.lyrics.ui.LyricsActivity;
@@ -159,15 +160,9 @@ public class LyricsController {
         return activity;
     }
 
-    private Utilities.Callback<Object> loggingBridge = null;
-
-    public void setLoggingBridge(Utilities.Callback<Object> loggingBridge) {
-        this.loggingBridge = loggingBridge;
-    }
-
     private void logInternal(Object message) {
-        if (loggingBridge != null) {
-            loggingBridge.run(message);
+        if (PluginController.getInstance().getPluginInstance() != null) {
+            PluginController.getInstance().log(message);
         }
     }
 
