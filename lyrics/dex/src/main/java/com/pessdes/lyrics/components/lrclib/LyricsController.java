@@ -3,21 +3,16 @@ package com.pessdes.lyrics.components.lrclib;
 import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 
-import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import com.pessdes.lyrics.ui.LyricsActivity;
-import com.pessdes.lyrics.ui.components.LyricsScroller;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
@@ -27,7 +22,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -116,7 +110,7 @@ public class LyricsController {
                 if (firstNonInstrumental == null) {
                     firstNonInstrumental = currentLyrics;
                 }
-                
+
                 if (trackDuration > 0 && Math.round(currentLyrics.duration) == Math.round(trackDuration)) {
                     return currentLyrics;
                 }

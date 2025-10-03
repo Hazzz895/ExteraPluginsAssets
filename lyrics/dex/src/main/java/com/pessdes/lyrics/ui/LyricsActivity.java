@@ -1,7 +1,5 @@
 package com.pessdes.lyrics.ui;
 
-import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -17,8 +15,6 @@ import androidx.annotation.NonNull;
 
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
-import com.pessdes.lyrics.ui.components.LyricsScroller;
-import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -31,6 +27,7 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.RecyclerListView;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final int[] notificationIds = new int[] {
@@ -45,7 +42,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     private FrameLayout lyricsLayout;
     private LayerDrawable gradient;
-    private LyricsScroller lyricsScroller;
+    private RecyclerListView lyricsScroller;
     private ScrollView plainLyricsScroller;
     private TextView plainLyricsView;
 
@@ -76,10 +73,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
-        lyricsScroller = new LyricsScroller(context, new Lyrics(0, "", "", "", 0, false, "", "[00:00:00] test\n[00:01:00] test2"));
+        /*lyricsScroller = new RecyclerListView(context);
         lyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         lyricsScroller.setClipToPadding(false);
-        lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));*/
 
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setVisibility(View.GONE);
@@ -144,8 +141,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
                             if (lastLyrics.syncedLyrics != null) {
-                                lyricsScroller.setVisibility(View.VISIBLE);
-                                lyricsScroller.setLyrics(lastLyrics);
+                                //lyricsScroller.setVisibility(View.VISIBLE);
+                                //lyricsScroller.setLyrics(lastLyrics);
+                                plainLyricsScroller.setVisibility(View.VISIBLE);
+                                plainLyricsView.setText(lastLyrics.plainSyncedLyrics);
                             } else if (lastLyrics.plainLyrics != null) {
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
@@ -222,7 +221,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             onMusicProgressChanged();
         }
         else if (id == NotificationCenter.messagePlayingSpeedChanged) {
-            lyricsScroller.setSpeed(MediaController.getInstance().getPlaybackSpeed(true));
+            //lyricsScroller.setSpeed(MediaController.getInstance().getPlaybackSpeed(true));
         }
     }
 }
