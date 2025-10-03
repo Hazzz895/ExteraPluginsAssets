@@ -7,14 +7,19 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
+import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
+import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -28,6 +33,8 @@ import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
+
+import java.util.List;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final int[] notificationIds = new int[] {
@@ -73,10 +80,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
-        /*lyricsScroller = new RecyclerListView(context);
+        lyricsScroller = new RecyclerListView(context);
         lyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         lyricsScroller.setClipToPadding(false);
-        lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));*/
+        lyricsScroller.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+        lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setVisibility(View.GONE);
@@ -140,12 +148,12 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
                     AndroidUtilities.runOnUIThread(() -> {
                         if (lastLyrics != null && (lastLyrics.syncedLyrics != null || lastLyrics.plainLyrics != null)) {
-                            if (lastLyrics.syncedLyrics != null) {
-                                //lyricsScroller.setVisibility(View.VISIBLE);
-                                //lyricsScroller.setLyrics(lastLyrics);
-                                plainLyricsScroller.setVisibility(View.VISIBLE);
-                                plainLyricsView.setText(lastLyrics.plainSyncedLyrics);
+                            if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
+                                lyricsScroller.setVisibility(View.VISIBLE);
+                                plainLyricsScroller.setVisibility(View.GONE);
+                                lyricsScroller.setAdapter(new LyricsAdapter(getContext(), lastLyrics.syncedLyrics));
                             } else if (lastLyrics.plainLyrics != null) {
+                                lyricsScroller.setVisibility(View.GONE);
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
                             }
@@ -222,6 +230,47 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         }
         else if (id == NotificationCenter.messagePlayingSpeedChanged) {
             //lyricsScroller.setSpeed(MediaController.getInstance().getPlaybackSpeed(true));
+        }
+    }
+
+    private class LyricsAdapter extends RecyclerListView.SelectionAdapter {
+        private Context mContext;
+        private List<SyncedLyricsLine> lyricsLines;
+
+        public LyricsAdapter(Context context, List<SyncedLyricsLine> lines) {
+            mContext = context;
+            lyricsLines = lines;
+        }
+
+        @Override
+        public boolean isEnabled(@NonNull RecyclerView.ViewHolder holder) {
+            return false;
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            LyricsCell lyricsCell = new LyricsCell(mContext);
+            lyricsCell.setGravity(Gravity.CENTER);
+            lyricsCell.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(8));
+
+            lyricsCell.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
+
+            return new RecyclerListView.Holder(lyricsCell);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            LyricsCell lyricsCell = (LyricsCell) holder.itemView;
+            SyncedLyricsLine line = lyricsLines.get(position);
+            if (line != null) {
+                lyricsCell.setText(line.text);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return lyricsLines != null ? lyricsLines.size() : 0;
         }
     }
 }
