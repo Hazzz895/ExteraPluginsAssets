@@ -4,6 +4,7 @@ import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
 
 import android.content.Context;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -20,9 +21,41 @@ import org.telegram.ui.Components.RecyclerListView;
 import java.util.List;
 
 public class LyricsScroller extends RecyclerListView {
+    private int itemHeight = 0;
+
     public LyricsScroller(Context context) {
         super(context);
         this.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+        setClipToPadding(false);
+    }
+
+    @Override
+    protected void onMeasure(int widthSpec, int heightSpec) {
+        super.onMeasure(widthSpec, heightSpec);
+        int h = getMeasuredHeight();
+        if (h > 0) {
+            if (itemHeight == 0 && getAdapter() != null && getAdapter().getItemCount() > 0) {
+                LyricsAdapter adapter = (LyricsAdapter) getAdapter();
+                if (adapter == null) return;
+
+                RecyclerView.ViewHolder holder = adapter.createViewHolder(this, 0);
+                adapter.onBindViewHolder(holder, 0);
+                View itemView = holder.itemView;
+
+                itemView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+                int heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+                itemView.measure(widthSpec, heightMeasureSpec);
+
+                itemHeight = itemView.getMeasuredHeight();
+            }
+            if (itemHeight > 0) {
+                int verticalPadding = h / 2 - itemHeight / 2;
+                if (getPaddingTop() != verticalPadding) {
+                    setPadding(0, verticalPadding, 0, verticalPadding);
+                }
+            }
+        }
     }
 
     private Lyrics lyrics;
@@ -45,7 +78,7 @@ public class LyricsScroller extends RecyclerListView {
         } else {
             LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
             if (layoutManager != null) {
-                int offset = getHeight() / 2;
+                int offset = getHeight() / 2 - itemHeight;
                 layoutManager.scrollToPositionWithOffset(line, offset);
             }
         }
