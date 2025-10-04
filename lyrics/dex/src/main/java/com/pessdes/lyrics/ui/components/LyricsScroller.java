@@ -79,7 +79,7 @@ public class LyricsScroller extends RecyclerListView {
             LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
             if (layoutManager != null) {
                 int offset = getHeight() / 2 - itemHeight;
-                layoutManager.scrollToPositionWithOffset(line + 1, offset);
+                layoutManager.scrollToPositionWithOffset(line + 5, offset);
             }
         }
     }
