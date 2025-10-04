@@ -25,7 +25,7 @@ import java.util.List;
 public class LyricsScroller extends RecyclerListView {
     private int itemHeight = 0;
     private final LyricsActivity lyricsActivity;
-    private final int shift = 5;
+    private final int shift = 1;
     public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
         this.lyricsActivity = lyricsActivity;

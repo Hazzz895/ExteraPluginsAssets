@@ -246,7 +246,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 lyricsScroller.getAdapter().notifyDataSetChanged();
             }
 
-            lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
+            lyricsScroller.scrollToLine(currentLyricsLineIndex, false);
         }
     }
 
