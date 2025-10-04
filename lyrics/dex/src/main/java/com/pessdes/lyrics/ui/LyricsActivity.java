@@ -239,9 +239,14 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         int newLineIndex = findCurrentLineIndex(lastLyrics, progressSeconds);
 
-        if (newLineIndex != -1 && newLineIndex != currentLyricsLineIndex) {
+        if (newLineIndex != currentLyricsLineIndex) {
             currentLyricsLineIndex = newLineIndex;
-            lyricsScroller.scrollToLine(currentLyricsLineIndex, false);
+
+            if (lyricsScroller.getAdapter() != null) {
+                lyricsScroller.getAdapter().notifyDataSetChanged();
+            }
+
+            lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
         }
     }
 
@@ -255,7 +260,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         int currentLine = -1;
         for (int i = 0; i < lyrics.syncedLyrics.size(); i++) {
             SyncedLyricsLine line = lyrics.syncedLyrics.get(i);
-            if (progressMillis >= line.timestamp) {
+            if (line.timestamp >= progressMillis) {
                 currentLine = i;
             } else {
                 break;
