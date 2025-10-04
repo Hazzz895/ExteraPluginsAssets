@@ -229,7 +229,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         if (newLineIndex != -1 && newLineIndex != currentLyricsLineIndex) {
             currentLyricsLineIndex = newLineIndex;
-            lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
+            lyricsScroller.scrollToLine(currentLyricsLineIndex, false);
         }
     }
 
