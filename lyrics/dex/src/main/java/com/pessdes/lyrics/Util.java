@@ -12,4 +12,12 @@ public class Util {
         }
         return str;
     }
+
+    public static int mixColors(int color1, int color2) {
+        int r = (((color1 >> 16) & 0xFF) + ((color2 >> 16) & 0xFF)) / 2;
+        int g = (((color1 >> 8) & 0xFF) + ((color2 >> 8) & 0xFF)) / 2;
+        int b = ((color1 & 0xFF) + (color2 & 0xFF)) / 2;
+
+        return (r << 16) | (g << 8) | b;
+    }
 }

@@ -25,7 +25,7 @@ import java.util.List;
 public class LyricsScroller extends RecyclerListView {
     private int itemHeight = 0;
     private final LyricsActivity lyricsActivity;
-
+    private final int shift = 1;
     public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
         this.lyricsActivity = lyricsActivity;
@@ -73,6 +73,7 @@ public class LyricsScroller extends RecyclerListView {
     }
 
     public void scrollToLine(int line, boolean smooth) {
+        line += shift;
         if (line < 0 || getAdapter() == null || line >= getAdapter().getItemCount()) {
             return;
         }
@@ -82,13 +83,13 @@ public class LyricsScroller extends RecyclerListView {
         } else {
             LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
             if (layoutManager != null) {
-                int offset = getHeight() / 2 - itemHeight;
+                int offset = getHeight() / 2;
                 layoutManager.scrollToPositionWithOffset(line, offset);
             }
         }
     }
 
-    private static class LyricsAdapter extends RecyclerListView.SelectionAdapter {
+    private class LyricsAdapter extends RecyclerListView.SelectionAdapter {
         private Context mContext;
         private List<SyncedLyricsLine> lyricsLines;
         private final LyricsActivity lyricsActivity;
@@ -146,7 +147,11 @@ public class LyricsScroller extends RecyclerListView {
             } else if (viewType == TYPE_TEXT) {
                 SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
 
-                int lineIndex = position - 1;
+                int lineIndex = position - shift;
+                if (lineIndex < 0 || lineIndex >= lyricsLines.size()) {
+                    return;
+                }
+
                 SyncedLyricsLine line = lyricsLines.get(lineIndex);
                 if (line != null) {
                     lyricsCell.setText(line.text);
@@ -154,20 +159,19 @@ public class LyricsScroller extends RecyclerListView {
 
                 int currentActiveLine = lyricsActivity.getCurrentLineIndex();
 
-                if (lineIndex < currentActiveLine) {
-                    lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
-                } else if (lineIndex == currentActiveLine) {
+                if (lineIndex == currentActiveLine) {
                     lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
+                } else if (lineIndex == currentActiveLine + 1) {
+                    lyricsCell.setState(SyncedLyricsCell.State.NEXT);
                 } else {
-                    lyricsCell.setState(SyncedLyricsCell.State.NORMAL);
+                    lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
                 }
             }
         }
 
         @Override
         public int getItemCount() {
-            // +1 для таймера
-            return lyricsLines != null ? lyricsLines.size() + 1 : 0;
+            return lyricsLines != null ? lyricsLines.size() + shift : 0;
         }
     }
 }
