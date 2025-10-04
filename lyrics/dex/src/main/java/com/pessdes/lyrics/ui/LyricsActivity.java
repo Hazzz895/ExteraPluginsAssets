@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
+import com.pessdes.lyrics.ui.components.LyricsScroller;
 import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
 import com.pessdes.lyrics.ui.components.cells.SyncedLyricsCell;
@@ -52,7 +53,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     private FrameLayout lyricsLayout;
     private LayerDrawable gradient;
-    private RecyclerListView lyricsScroller;
+    private LyricsScroller lyricsScroller;
     private ScrollView plainLyricsScroller;
     private TextView plainLyricsView;
 
@@ -83,10 +84,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
-        lyricsScroller = new RecyclerListView(context);
+        lyricsScroller = new LyricsScroller(context);
         lyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         lyricsScroller.setClipToPadding(false);
-        lyricsScroller.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
@@ -154,8 +154,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                             if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsScroller.setVisibility(View.GONE);
-                                lyricsScroller.setAdapter(new LyricsAdapter(getContext(), lastLyrics.syncedLyrics));
-                                log("Lyrics loaded: " + lastLyrics.syncedLyrics.size());
+                                lyricsScroller.setLyrics(lastLyrics);
+                                onMusicProgressChanged();
                             } else if (lastLyrics.plainLyrics != null) {
                                 lyricsScroller.setVisibility(View.GONE);
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
@@ -168,6 +168,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         }
                     });
                 });
+            }
+            else {
+                onMusicProgressChanged();
             }
         }
         actionBar.setTitle(title);
@@ -206,8 +209,44 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void onMusicProgressChanged() {
+        if (lyricsScroller == null || lyricsScroller.getVisibility() != View.VISIBLE || lastLyrics == null) {
+            return;
+        }
 
+        MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
+        if (messageObject == null) {
+            return;
+        }
+
+        float progress = messageObject.audioProgress;
+        double duration = messageObject.getDuration();
+        double progressSeconds = progress * duration;
+
+        int currentLineIndex = findCurrentLineIndex(lastLyrics, progressSeconds);
+        if (currentLineIndex != -1) {
+            lyricsScroller.scrollToLine(currentLineIndex, true);
+        }
     }
+
+    private int findCurrentLineIndex(Lyrics lyrics, double progressSeconds) {
+        if (lyrics == null || lyrics.syncedLyrics == null || lyrics.syncedLyrics.isEmpty()) {
+            return -1;
+        }
+
+        long progressMillis = (long) (progressSeconds * 1000);
+
+        int currentLine = -1;
+        for (int i = 0; i < lyrics.syncedLyrics.size(); i++) {
+            SyncedLyricsLine line = lyrics.syncedLyrics.get(i);
+            if (progressMillis >= line.timestamp) {
+                currentLine = i;
+            } else {
+                break;
+            }
+        }
+        return currentLine;
+    }
+
     private void onMusicStateChanged() {
         if (MediaController.getInstance().isMessagePaused()) {
             onMusicPause();
@@ -234,52 +273,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         }
         else if (id == NotificationCenter.messagePlayingSpeedChanged) {
             //lyricsScroller.setSpeed(MediaController.getInstance().getPlaybackSpeed(true));
-        }
-    }
-
-    private class LyricsAdapter extends RecyclerListView.SelectionAdapter {
-        private Context mContext;
-        private List<SyncedLyricsLine> lyricsLines;
-
-        public LyricsAdapter(Context context, List<SyncedLyricsLine> lines) {
-            mContext = context;
-            lyricsLines = lines;
-            log("ok");
-        }
-
-        @Override
-        public boolean isEnabled(@NonNull RecyclerView.ViewHolder holder) {
-            return false;
-        }
-
-        @NonNull
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            log("creating view holder " + viewType);
-            SyncedLyricsCell lyricsCell = new SyncedLyricsCell(mContext);
-            lyricsCell.setGravity(Gravity.CENTER);
-            lyricsCell.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(8));
-
-            lyricsCell.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
-
-            return new RecyclerListView.Holder(lyricsCell);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            log("binding view holder " + position);
-            SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
-            SyncedLyricsLine line = lyricsLines.get(position);
-            if (line != null) {
-                lyricsCell.setText(line.text);
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            var count = lyricsLines != null ? lyricsLines.size() : 0;
-            log(count + " lines");
-            return count;
         }
     }
 }
