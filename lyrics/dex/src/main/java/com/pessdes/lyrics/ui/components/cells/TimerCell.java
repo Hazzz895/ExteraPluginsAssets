@@ -46,7 +46,7 @@ public class TimerCell extends FrameLayout {
     }
 
     public void startAnimation() {
-        if (mainAnimatorSet != null && mainAnimatorSet.isPaused()) {
+        if (false/*mainAnimatorSet != null && mainAnimatorSet.isPaused()*/) {
             mainAnimatorSet.resume();
         }
         else {
