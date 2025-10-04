@@ -179,6 +179,20 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         actionBar.setSubtitle(subTitle);
     }
 
+    private enum State {
+        None,
+        Plain,
+        Synced
+    }
+
+    private State state = State.None;
+
+    private void updateLyricsState(State state) {
+        if (this.state == state) {
+            return;
+        }
+    }
+
     private void configureNotifications(boolean enable) {
         for (int id : notificationIds) {
             if (enable) {
