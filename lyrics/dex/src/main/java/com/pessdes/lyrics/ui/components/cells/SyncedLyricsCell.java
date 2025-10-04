@@ -10,6 +10,7 @@ public class SyncedLyricsCell extends LyricsCell {
     public enum State {
         DEACTIVATED,
         NORMAL,
+        NEXT, // # TODO
         ACTIVATED,
     }
 

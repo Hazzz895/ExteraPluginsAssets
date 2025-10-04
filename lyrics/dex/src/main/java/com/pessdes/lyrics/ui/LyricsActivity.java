@@ -85,7 +85,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         gradient = getLayerDrawable(bgColor);
         lyricsLayout.setForeground(gradient);
 
-        lyricsScroller = new LyricsScroller(context);
+        lyricsScroller = new LyricsScroller(context, this);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
@@ -256,7 +256,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         for (int i = 0; i < lyrics.syncedLyrics.size(); i++) {
             SyncedLyricsLine line = lyrics.syncedLyrics.get(i);
             if (progressMillis >= line.timestamp) {
-                currentLine = i + 1;
+                currentLine = i;
             } else {
                 break;
             }
@@ -291,5 +291,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         else if (id == NotificationCenter.messagePlayingSpeedChanged) {
             //lyricsScroller.setSpeed(MediaController.getInstance().getPlaybackSpeed(true));
         }
+    }
+
+    public int getCurrentLineIndex() {
+        return currentLyricsLineIndex;
     }
 }

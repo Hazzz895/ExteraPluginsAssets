@@ -13,7 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
+import com.pessdes.lyrics.ui.LyricsActivity;
 import com.pessdes.lyrics.ui.components.cells.SyncedLyricsCell;
+import com.pessdes.lyrics.ui.components.cells.TimerCell;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.Components.RecyclerListView;
@@ -22,9 +24,11 @@ import java.util.List;
 
 public class LyricsScroller extends RecyclerListView {
     private int itemHeight = 0;
+    private final LyricsActivity lyricsActivity;
 
-    public LyricsScroller(Context context) {
+    public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
+        this.lyricsActivity = lyricsActivity;
         this.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         setClipToPadding(false);
     }
@@ -65,7 +69,7 @@ public class LyricsScroller extends RecyclerListView {
             return;
         }
         this.lyrics = lyrics;
-        this.setAdapter(new LyricsAdapter(getContext(), lyrics.syncedLyrics));
+        this.setAdapter(new LyricsAdapter(getContext(), lyrics.syncedLyrics, lyricsActivity));
     }
 
     public void scrollToLine(int line, boolean smooth) {
@@ -79,7 +83,7 @@ public class LyricsScroller extends RecyclerListView {
             LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
             if (layoutManager != null) {
                 int offset = getHeight() / 2 - itemHeight;
-                layoutManager.scrollToPositionWithOffset(line + 5, offset);
+                layoutManager.scrollToPositionWithOffset(line, offset);
             }
         }
     }
@@ -87,11 +91,15 @@ public class LyricsScroller extends RecyclerListView {
     private static class LyricsAdapter extends RecyclerListView.SelectionAdapter {
         private Context mContext;
         private List<SyncedLyricsLine> lyricsLines;
+        private final LyricsActivity lyricsActivity;
 
-        public LyricsAdapter(Context context, List<SyncedLyricsLine> lines) {
+        public int TYPE_TIMER = 0;
+        public int TYPE_TEXT = 1;
+
+        public LyricsAdapter(Context context, List<SyncedLyricsLine> lines, LyricsActivity lyricsActivity) {
             mContext = context;
             lyricsLines = lines;
-            log("ok");
+            this.lyricsActivity = lyricsActivity;
         }
 
         @Override
@@ -99,32 +107,67 @@ public class LyricsScroller extends RecyclerListView {
             return false;
         }
 
+        @Override
+        public int getItemViewType(int position) {
+            return position == 0 ? TYPE_TIMER : TYPE_TEXT;
+        }
+
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            log("creating view holder " + viewType);
-            SyncedLyricsCell lyricsCell = new SyncedLyricsCell(mContext);
-            lyricsCell.setGravity(Gravity.CENTER);
-            lyricsCell.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(8));
+            View view;
+            if (viewType == TYPE_TIMER) {
+                view = new TimerCell(mContext);
+            }
+            else {
+                SyncedLyricsCell lyricsCell = new SyncedLyricsCell(mContext);
+                lyricsCell.setGravity(Gravity.CENTER);
+                lyricsCell.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(8));
+                lyricsCell.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
 
-            lyricsCell.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
-
-            return new RecyclerListView.Holder(lyricsCell);
+                view = lyricsCell;
+            }
+            return new RecyclerListView.Holder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            log("binding view holder " + position);
-            SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
-            SyncedLyricsLine line = lyricsLines.get(position);
-            if (line != null) {
-                lyricsCell.setText(line.text);
+            int viewType = holder.getItemViewType();
+
+            if (viewType == TYPE_TIMER) {
+                TimerCell timerCell = (TimerCell) holder.itemView;
+                if (lyricsActivity.getCurrentLineIndex() == -1) {
+                    timerCell.setVisibility(View.VISIBLE);
+                    timerCell.startAnimation();
+                }
+                else {
+                    timerCell.setVisibility(View.GONE);
+                }
+            } else if (viewType == TYPE_TEXT) {
+                SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
+
+                int lineIndex = position - 1;
+                SyncedLyricsLine line = lyricsLines.get(lineIndex);
+                if (line != null) {
+                    lyricsCell.setText(line.text);
+                }
+
+                int currentActiveLine = lyricsActivity.getCurrentLineIndex();
+
+                if (lineIndex < currentActiveLine) {
+                    lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
+                } else if (lineIndex == currentActiveLine) {
+                    lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
+                } else {
+                    lyricsCell.setState(SyncedLyricsCell.State.NORMAL);
+                }
             }
         }
 
         @Override
         public int getItemCount() {
-            return lyricsLines != null ? lyricsLines.size() : 0;
+            // +1 для таймера
+            return lyricsLines != null ? lyricsLines.size() + 1 : 0;
         }
     }
 }
