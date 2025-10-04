@@ -46,7 +46,7 @@ public class TimerCell extends FrameLayout {
     }
 
     public void startAnimation() {
-        if (mainAnimatorSet.isPaused()) {
+        if (mainAnimatorSet != null && mainAnimatorSet.isPaused()) {
             mainAnimatorSet.resume();
         }
         else {
@@ -112,8 +112,6 @@ public class TimerCell extends FrameLayout {
         set.playSequentially(upSet, downSet);
         return set;
     }
-
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int desiredWidth = 0;
