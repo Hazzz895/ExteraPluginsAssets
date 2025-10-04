@@ -86,8 +86,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         lyricsLayout.setForeground(gradient);
 
         lyricsScroller = new LyricsScroller(context);
-        lyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
-        lyricsScroller.setClipToPadding(false);
         lyricsLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
@@ -258,7 +256,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         for (int i = 0; i < lyrics.syncedLyrics.size(); i++) {
             SyncedLyricsLine line = lyrics.syncedLyrics.get(i);
             if (progressMillis >= line.timestamp) {
-                currentLine = i;
+                currentLine = i + 1;
             } else {
                 break;
             }
