@@ -59,6 +59,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     private Lyrics lastLyrics;
     private MessageObject lastMessageObject;
+    private int currentLyricsLineIndex = -1;
 
     @Override
     public View createView(Context context) {
@@ -145,6 +146,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
             if (isNew) {
+                currentLyricsLineIndex = -1;
                 var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
                 final String finalTitle = title;
                 Utilities.globalQueue.postRunnable(() -> {
@@ -208,6 +210,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     }
 
+
     private void onMusicProgressChanged() {
         if (lyricsScroller == null || lyricsScroller.getVisibility() != View.VISIBLE || lastLyrics == null) {
             return;
@@ -222,9 +225,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         double duration = messageObject.getDuration();
         double progressSeconds = progress * duration;
 
-        int currentLineIndex = findCurrentLineIndex(lastLyrics, progressSeconds);
-        if (currentLineIndex != -1) {
-            lyricsScroller.scrollToLine(currentLineIndex, true);
+        int newLineIndex = findCurrentLineIndex(lastLyrics, progressSeconds);
+
+        if (newLineIndex != -1 && newLineIndex != currentLyricsLineIndex) {
+            currentLyricsLineIndex = newLineIndex;
+            lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
         }
     }
 
