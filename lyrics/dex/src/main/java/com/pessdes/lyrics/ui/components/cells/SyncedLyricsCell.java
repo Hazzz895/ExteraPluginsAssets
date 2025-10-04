@@ -2,6 +2,8 @@ package com.pessdes.lyrics.ui.components.cells;
 
 import android.content.Context;
 
+import com.pessdes.lyrics.components.lrclib.LyricsController;
+
 import org.telegram.ui.ActionBar.Theme;
 
 public class SyncedLyricsCell extends LyricsCell {
@@ -13,6 +15,7 @@ public class SyncedLyricsCell extends LyricsCell {
 
     public SyncedLyricsCell(Context context) {
         super(context);
+        this.setTypeface(LyricsController.getInstance().getTypeface());
         setState(State.NORMAL);
     }
 

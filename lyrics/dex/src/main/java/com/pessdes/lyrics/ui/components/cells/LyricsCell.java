@@ -10,6 +10,5 @@ import org.telegram.ui.ActionBar.Theme;
 public class LyricsCell extends TextView {
     public LyricsCell(Context context) {
         super(context);
-        this.setTypeface(LyricsController.getInstance().getTypeface());
     }
 }
