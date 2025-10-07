@@ -31,7 +31,7 @@ public class SyncedLyricsCell extends LyricsCell {
     // Специально не сделал final, изменяйте это значение через set_private_field если необходимо
     static int TEXT_SIZE = 42;
 
-    static final float DEACTIVATED_RATIO = 1F;
+    static final float DEACTIVATED_RATIO = 0.6F;
     static final float NEXT_RATIO = (DEACTIVATED_RATIO + 1) / 2;
     public void setState(State state) {
         switch (state) {
@@ -59,7 +59,7 @@ public class SyncedLyricsCell extends LyricsCell {
     }
 
     private void setScaleXAndY(float scale) {
-        this.setScaleX(scale);
-        this.setScaleY(scale);
+        /*this.setScaleX(scale);
+        this.setScaleY(scale);*/
     }
 }
