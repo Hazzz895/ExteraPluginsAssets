@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.ui;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -199,7 +201,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             return;
         }
         SyncedLyricsLine line = lastLyrics.syncedLyrics.get(position);
-        MediaController.getInstance().seekToProgressMs(currentMessageObject, line.timestamp / 1000);
+        MediaController.getInstance().seekToProgressMs(currentMessageObject, line.timestamp * 1000L);
         setBrowsing(false);
     }
 

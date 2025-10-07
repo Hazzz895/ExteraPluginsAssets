@@ -32,7 +32,7 @@ public class SyncedLyricsCell extends LyricsCell {
     static int TEXT_SIZE = 42;
 
     static final float DEACTIVATED_ALPHA = 0.3F;
-    static final float NEXT_ALPHA = (DEACTIVATED_ALPHA + 1) / 2;
+    static final float NEXT_ALPHA = (DEACTIVATED_ALPHA + 1) / 3;
     public void setState(State state) {
         switch (state) {
             case DEACTIVATED:
