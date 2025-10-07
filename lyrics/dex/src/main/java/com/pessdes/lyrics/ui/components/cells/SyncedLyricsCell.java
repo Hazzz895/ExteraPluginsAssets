@@ -18,39 +18,42 @@ public class SyncedLyricsCell extends LyricsCell {
     public SyncedLyricsCell(Context context, State state) {
         super(context);
         this.setTypeface(LyricsController.getInstance().getTypeface());
+        this.setTextSize(TEXT_SIZE);
         setState(state);
     }
 
     public SyncedLyricsCell(Context context) {
         super(context);
+        this.setTextSize(TEXT_SIZE);
         this.setTypeface(LyricsController.getInstance().getTypeface());
     }
 
-    final int NORMAL_SIZE = 36;
-    final int ACTIVATED_SIZE = 42;
-    final int NEXT_SIZE = (NORMAL_SIZE + ACTIVATED_SIZE) / 2;
+    // Специально не сделал final, изменяйте это значение через set_private_field если необходимо
+    static int TEXT_SIZE = 42;
 
+    static final float DEACTIVATED_RATIO = 0.7F;
+    static final float NEXT_RATIO = (DEACTIVATED_RATIO + 1) / 2;
     public void setState(State state) {
         switch (state) {
             case DEACTIVATED:
-                this.setTextSize(NORMAL_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextGray4));
-                this.setAlpha(0.5F);
+                this.setAlpha(DEACTIVATED_RATIO);
+                this.setScaleX(DEACTIVATED_RATIO);
                 break;
             case BROWSING:
-                this.setTextSize(NORMAL_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);
+                this.setScaleX(NEXT_RATIO);
                 break;
             case NEXT:
-                this.setTextSize(NEXT_SIZE);
                 this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
-                this.setAlpha(0.75F);
+                this.setAlpha(NEXT_RATIO);
+                this.setScaleX(NEXT_RATIO);
                 break;
             case ACTIVATED:
-                this.setTextSize(ACTIVATED_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);
+                this.setScaleX(1F);
                 break;
         }
     }
