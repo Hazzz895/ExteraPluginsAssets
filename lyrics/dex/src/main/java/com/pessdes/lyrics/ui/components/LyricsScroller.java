@@ -176,22 +176,19 @@ public class LyricsScroller extends RecyclerListView {
                     lyricsCell.setText(line.text);
                 }
 
-                int currentActiveLine = lyricsActivity.getCurrentLineIndex() - shift;
+                int currentActiveLine = lyricsActivity.getCurrentLineIndex();
 
                 if (lyricsActivity.isBrowsing()) {
                     lyricsCell.setState(SyncedLyricsCell.State.BROWSING);
                 } else {
                     if (lineIndex == currentActiveLine) {
                         lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
-                    } else if (lineIndex == currentActiveLine + 1) {
+                    } else if (false/*lineIndex == currentActiveLine + 1*/) {
                         lyricsCell.setState(SyncedLyricsCell.State.NEXT);
-                    } else if (lineIndex < currentActiveLine) {
-                        lyricsCell.setState(SyncedLyricsCell.State.HIDDEN);
                     } else {
                         lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
                     }
                 }
-
                 holder.itemView.setOnClickListener(v -> {
                     if (lyricsActivity.isBrowsing() && line != null) {
                         lyricsActivity.seekTo(line.timestamp);

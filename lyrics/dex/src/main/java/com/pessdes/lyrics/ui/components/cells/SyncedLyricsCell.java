@@ -9,7 +9,6 @@ import org.telegram.ui.ActionBar.Theme;
 
 public class SyncedLyricsCell extends LyricsCell {
     public enum State {
-        HIDDEN,
         DEACTIVATED,
         BROWSING,
         NEXT,
@@ -34,19 +33,15 @@ public class SyncedLyricsCell extends LyricsCell {
 
     static final float DEACTIVATED_ALPHA = 0.3F;
     static final float NEXT_ALPHA = (DEACTIVATED_ALPHA + 1) / 2;
-
     public void setState(State state) {
         switch (state) {
-            case HIDDEN:
-                this.setAlpha(0);
-                break;
             case DEACTIVATED:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextGray4));
                 this.setAlpha(DEACTIVATED_ALPHA);
                 break;
             case BROWSING:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-                this.setAlpha(1);
+                this.setAlpha(1F);
                 break;
             case NEXT:
                 this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
@@ -54,7 +49,7 @@ public class SyncedLyricsCell extends LyricsCell {
                 break;
             case ACTIVATED:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-                this.setAlpha(1);
+                this.setAlpha(1F);
                 break;
         }
     }
