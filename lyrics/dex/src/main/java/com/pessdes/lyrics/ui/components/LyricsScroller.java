@@ -183,12 +183,15 @@ public class LyricsScroller extends RecyclerListView {
                 } else {
                     if (lineIndex == currentActiveLine) {
                         lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
-                    } else if (false/*lineIndex == currentActiveLine + 1*/) {
+                    } else if (lineIndex == currentActiveLine + 1) {
                         lyricsCell.setState(SyncedLyricsCell.State.NEXT);
+                    } else if (lineIndex < currentActiveLine) {
+                        lyricsCell.setState(SyncedLyricsCell.State.HIDDEN);
                     } else {
                         lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
                     }
                 }
+
                 holder.itemView.setOnClickListener(v -> {
                     if (lyricsActivity.isBrowsing() && line != null) {
                         lyricsActivity.seekTo(line.timestamp);
