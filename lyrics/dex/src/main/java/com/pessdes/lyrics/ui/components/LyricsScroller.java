@@ -176,7 +176,7 @@ public class LyricsScroller extends RecyclerListView {
                     lyricsCell.setText(line.text);
                 }
 
-                int currentActiveLine = lyricsActivity.getCurrentLineIndex();
+                int currentActiveLine = lyricsActivity.getCurrentLineIndex() - shift;
 
                 if (lyricsActivity.isBrowsing()) {
                     lyricsCell.setState(SyncedLyricsCell.State.BROWSING);
