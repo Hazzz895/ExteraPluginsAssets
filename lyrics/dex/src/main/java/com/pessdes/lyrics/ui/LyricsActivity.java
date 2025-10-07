@@ -159,7 +159,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                                 lyricsScroller.setVisibility(View.VISIBLE);
                                 plainLyricsScroller.setVisibility(View.GONE);
                                 lyricsScroller.setLyrics(lastLyrics);
-                                onMusicProgressChanged();
+                                lyricsScroller.post(this::onMusicProgressChanged);
                             } else if (lastLyrics.plainLyrics != null) {
                                 lyricsScroller.setVisibility(View.GONE);
                                 plainLyricsScroller.setVisibility(View.VISIBLE);
