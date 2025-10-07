@@ -179,6 +179,10 @@ public class LyricsController {
         getInstance().logInternal(message);
     }
 
+    public static void log(Object object) {
+        log(object.toString());
+    }
+
     private Typeface typeface;
 
     public void setTypeface(Typeface typeface) {
