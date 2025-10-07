@@ -10,7 +10,7 @@ import org.telegram.ui.ActionBar.Theme;
 public class SyncedLyricsCell extends LyricsCell {
     public enum State {
         DEACTIVATED,
-        NORMAL,
+        BROWSING,
         NEXT,
         ACTIVATED,
     }
@@ -29,25 +29,25 @@ public class SyncedLyricsCell extends LyricsCell {
     final int NORMAL_SIZE = 36;
     final int ACTIVATED_SIZE = 42;
     final int NEXT_SIZE = (NORMAL_SIZE + ACTIVATED_SIZE) / 2;
-    public void setState(State state) {
-        if (state.ordinal() <= State.NORMAL.ordinal()) {
-            this.setTextSize(NORMAL_SIZE);
-        }
-        else if (state == State.NEXT) {
-            this.setTextSize(NEXT_SIZE);
-        }
-        else if (state == State.ACTIVATED) {
-            this.setTextSize(ACTIVATED_SIZE);
-        }
 
-        if (state == State.DEACTIVATED) {
-            this.setTextColor(Theme.getColor(Theme.key_dialogTextGray));
-        }
-        else if (state == State.NEXT) {
-            this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray), Theme.getColor(Theme.key_dialogTextBlack)));
-        }
-        else {
-            this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+    public void setState(State state) {
+        switch (state) {
+            case DEACTIVATED:
+                this.setTextSize(NORMAL_SIZE);
+                this.setTextColor(Theme.getColor(Theme.key_dialogTextGray));
+                break;
+            case BROWSING:
+                this.setTextSize(NORMAL_SIZE);
+                this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+                break;
+            case NEXT:
+                this.setTextSize(NEXT_SIZE);
+                this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray), Theme.getColor(Theme.key_dialogTextBlack)));
+                break;
+            case ACTIVATED:
+                this.setTextSize(ACTIVATED_SIZE);
+                this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+                break;
         }
     }
 }

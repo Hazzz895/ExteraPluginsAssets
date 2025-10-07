@@ -26,11 +26,21 @@ public class LyricsScroller extends RecyclerListView {
     private int itemHeight = 0;
     private final LyricsActivity lyricsActivity;
     private final int shift = 1;
+
     public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
         this.lyricsActivity = lyricsActivity;
         this.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         setClipToPadding(false);
+
+        addOnScrollListener(new OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    lyricsActivity.setBrowsing(true);
+                }
+            }
+        });
     }
 
     @Override
@@ -83,8 +93,7 @@ public class LyricsScroller extends RecyclerListView {
         } else {
             LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
             if (layoutManager != null) {
-                int offset = getHeight() / 2;
-                layoutManager.scrollToPositionWithOffset(line, offset);
+                layoutManager.scrollToPositionWithOffset(line, 0);
             }
         }
     }
@@ -105,7 +114,7 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public boolean isEnabled(@NonNull RecyclerView.ViewHolder holder) {
-            return false;
+            return true;
         }
 
         @Override
@@ -119,8 +128,7 @@ public class LyricsScroller extends RecyclerListView {
             View view;
             if (viewType == TYPE_TIMER) {
                 view = new TimerCell(mContext);
-            }
-            else {
+            } else {
                 SyncedLyricsCell lyricsCell = new SyncedLyricsCell(mContext);
                 lyricsCell.setGravity(Gravity.CENTER);
                 lyricsCell.setPadding(0, AndroidUtilities.dp(8), 0, AndroidUtilities.dp(8));
@@ -140,8 +148,7 @@ public class LyricsScroller extends RecyclerListView {
                 if (lyricsActivity.getCurrentLineIndex() == -1) {
                     timerCell.setVisibility(View.VISIBLE);
                     timerCell.startAnimation();
-                }
-                else {
+                } else {
                     timerCell.setVisibility(View.GONE);
                 }
             } else if (viewType == TYPE_TEXT) {
@@ -159,13 +166,22 @@ public class LyricsScroller extends RecyclerListView {
 
                 int currentActiveLine = lyricsActivity.getCurrentLineIndex();
 
-                if (lineIndex == currentActiveLine) {
-                    lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
-                } else if (lineIndex == currentActiveLine + 1) {
-                    lyricsCell.setState(SyncedLyricsCell.State.NEXT);
+                if (lyricsActivity.isBrowsing()) {
+                    lyricsCell.setState(SyncedLyricsCell.State.BROWSING);
                 } else {
-                    lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
+                    if (lineIndex == currentActiveLine) {
+                        lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
+                    } else if (lineIndex == currentActiveLine + 1) {
+                        lyricsCell.setState(SyncedLyricsCell.State.NEXT);
+                    } else {
+                        lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
+                    }
                 }
+                holder.itemView.setOnClickListener(v -> {
+                    if (lyricsActivity.isBrowsing()) {
+                        lyricsActivity.seekTo(lineIndex);
+                    }
+                });
             }
         }
 

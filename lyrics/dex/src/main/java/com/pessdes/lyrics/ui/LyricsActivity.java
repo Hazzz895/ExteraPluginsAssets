@@ -1,30 +1,25 @@
 package com.pessdes.lyrics.ui;
 
-import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import com.pessdes.lyrics.ui.components.LyricsScroller;
-import com.pessdes.lyrics.ui.components.cells.LyricsCell;
 import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
-import com.pessdes.lyrics.ui.components.cells.SyncedLyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.MediaController;
@@ -36,9 +31,6 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
-import org.telegram.ui.Components.RecyclerListView;
-
-import java.util.List;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final int[] notificationIds = new int[] {
@@ -58,8 +50,18 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private TextView plainLyricsView;
 
     private Lyrics lastLyrics;
-    private MessageObject lastMessageObject;
+    private MessageObject currentMessageObject;
     private int currentLyricsLineIndex = -1;
+    private boolean isBrowsing = false;
+    private final Handler browsingHandler = new Handler(Looper.getMainLooper());
+    private final Runnable browsingTimeoutRunnable = () -> {
+        isBrowsing = false;
+        if (lyricsScroller.getAdapter() != null) {
+            lyricsScroller.getAdapter().notifyDataSetChanged();
+        }
+        lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
+    };
+    private static final long BROWSING_TIMEOUT = 3000;
 
     @Override
     public View createView(Context context) {
@@ -138,8 +140,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         }
         else {
             MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
-            boolean isNew = lastMessageObject != messageObject;
-            lastMessageObject = messageObject;
+            boolean isNew = currentMessageObject != messageObject;
+            currentMessageObject = messageObject;
             title = messageObject.getMusicTitle();
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
@@ -177,19 +179,30 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         actionBar.setSubtitle(subTitle);
     }
 
-    private enum State {
-        None,
-        Plain,
-        Synced
-    }
-
-    private State state = State.None;
-
-    private void updateLyricsState(State state) {
-        if (this.state == state) {
-            return;
+    public void setBrowsing(boolean browsing) {
+        isBrowsing = browsing;
+        browsingHandler.removeCallbacks(browsingTimeoutRunnable);
+        if (isBrowsing) {
+            browsingHandler.postDelayed(browsingTimeoutRunnable, BROWSING_TIMEOUT);
+        }
+        if (lyricsScroller.getAdapter() != null) {
+            lyricsScroller.getAdapter().notifyDataSetChanged();
         }
     }
+
+    public boolean isBrowsing() {
+        return isBrowsing;
+    }
+
+    public void seekTo(int position) {
+        if (lastLyrics == null || lastLyrics.syncedLyrics == null || position < 0 || position >= lastLyrics.syncedLyrics.size()) {
+            return;
+        }
+        SyncedLyricsLine line = lastLyrics.syncedLyrics.get(position);
+        MediaController.getInstance().seekToProgress(currentMessageObject, line.timestamp);
+        setBrowsing(false);
+    }
+
 
     private void configureNotifications(boolean enable) {
         for (int id : notificationIds) {
@@ -215,11 +228,15 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void onMusicPause() {
-
+        if (lyricsScroller.getAdapter() != null) {
+            lyricsScroller.getAdapter().notifyItemChanged(0);
+        }
     }
 
     private void onMusicPlay() {
-
+        if (lyricsScroller.getAdapter() != null) {
+            lyricsScroller.getAdapter().notifyItemChanged(0);
+        }
     }
 
 
@@ -240,13 +257,21 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         int newLineIndex = findCurrentLineIndex(lastLyrics, progressSeconds);
 
         if (newLineIndex != currentLyricsLineIndex) {
+            int oldLineIndex = currentLyricsLineIndex;
             currentLyricsLineIndex = newLineIndex;
 
             if (lyricsScroller.getAdapter() != null) {
-                lyricsScroller.getAdapter().notifyDataSetChanged();
+                lyricsScroller.getAdapter().notifyItemChanged(oldLineIndex + 1);
+                lyricsScroller.getAdapter().notifyItemChanged(currentLyricsLineIndex + 1);
+                lyricsScroller.getAdapter().notifyItemChanged(currentLyricsLineIndex + 2);
+                if (oldLineIndex == -1 || newLineIndex == -1) {
+                    lyricsScroller.getAdapter().notifyItemChanged(0);
+                }
             }
 
-            lyricsScroller.scrollToLine(currentLyricsLineIndex, false);
+            if (!isBrowsing) {
+                lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
+            }
         }
     }
 
@@ -260,7 +285,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         int currentLine = -1;
         for (int i = 0; i < lyrics.syncedLyrics.size(); i++) {
             SyncedLyricsLine line = lyrics.syncedLyrics.get(i);
-            if (line.timestamp >= progressMillis) {
+            if (line.timestamp <= progressMillis) {
                 currentLine = i;
             } else {
                 break;
@@ -281,7 +306,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.messagePlayingDidStart || id == NotificationCenter.messagePlayingPlayStateChanged || id == NotificationCenter.messagePlayingDidReset) {
-            MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
             onMusicLoad();
             if (id == NotificationCenter.messagePlayingPlayStateChanged) {
                 onMusicStateChanged();
@@ -289,6 +313,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             else {
                 onMusicPlay();
             }
+        }
+        else if (id == NotificationCenter.messagePlayingDidSeek) {
+            onMusicProgressChanged();
         }
         else if (id == NotificationCenter.messagePlayingProgressDidChanged) {
             onMusicProgressChanged();
