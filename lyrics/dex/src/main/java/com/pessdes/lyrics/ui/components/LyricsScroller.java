@@ -25,7 +25,7 @@ import java.util.List;
 public class LyricsScroller extends RecyclerListView {
     private int itemHeight = 0;
     private final LyricsActivity lyricsActivity;
-    private final int shift = 1;
+    private final int shift = 2;
 
     public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
@@ -166,7 +166,7 @@ public class LyricsScroller extends RecyclerListView {
             } else if (viewType == TYPE_TEXT) {
                 SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
 
-                int lineIndex = position - shift;
+                int lineIndex = position - 1;
                 if (lineIndex < 0 || lineIndex >= lyricsLines.size()) {
                     return;
                 }
@@ -183,7 +183,7 @@ public class LyricsScroller extends RecyclerListView {
                 } else {
                     if (lineIndex == currentActiveLine) {
                         lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
-                    } else if (lineIndex == currentActiveLine + 1) {
+                    } else if (false/*lineIndex == currentActiveLine + 1*/) {
                         lyricsCell.setState(SyncedLyricsCell.State.NEXT);
                     } else {
                         lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);

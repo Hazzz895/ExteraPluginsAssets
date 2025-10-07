@@ -35,18 +35,22 @@ public class SyncedLyricsCell extends LyricsCell {
             case DEACTIVATED:
                 this.setTextSize(NORMAL_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextGray4));
+                this.setAlpha(0.5F);
                 break;
             case BROWSING:
                 this.setTextSize(NORMAL_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+                this.setAlpha(1F);
                 break;
             case NEXT:
                 this.setTextSize(NEXT_SIZE);
                 this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
+                this.setAlpha(0.75F);
                 break;
             case ACTIVATED:
                 this.setTextSize(ACTIVATED_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+                this.setAlpha(1F);
                 break;
         }
     }
