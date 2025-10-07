@@ -190,8 +190,8 @@ public class LyricsScroller extends RecyclerListView {
                     }
                 }
                 holder.itemView.setOnClickListener(v -> {
-                    if (lyricsActivity.isBrowsing()) {
-                        lyricsActivity.seekTo(lineIndex);
+                    if (lyricsActivity.isBrowsing() && line != null) {
+                        lyricsActivity.seekTo(line.timestamp);
                     }
                 });
             }

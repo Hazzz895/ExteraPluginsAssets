@@ -199,7 +199,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             return;
         }
         SyncedLyricsLine line = lastLyrics.syncedLyrics.get(position);
-        MediaController.getInstance().seekToProgress(currentMessageObject, line.timestamp);
+        MediaController.getInstance().seekToProgressMs(currentMessageObject, line.timestamp / 1000);
         setBrowsing(false);
     }
 
