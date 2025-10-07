@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.ui.components;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import android.content.Context;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -18,6 +20,7 @@ import com.pessdes.lyrics.ui.components.cells.SyncedLyricsCell;
 import com.pessdes.lyrics.ui.components.cells.TimerCell;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.MediaController;
 import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.List;
@@ -191,7 +194,8 @@ public class LyricsScroller extends RecyclerListView {
                 }
                 holder.itemView.setOnClickListener(v -> {
                     if (lyricsActivity.isBrowsing() && line != null) {
-                        lyricsActivity.seekTo(line.timestamp);
+                        MediaController.getInstance().seekToProgressMs(MediaController.getInstance().getPlayingMessageObject(), line.timestamp * 1000L);
+                        lyricsActivity.setBrowsing(false);
                     }
                 });
             }

@@ -196,15 +196,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         return isBrowsing;
     }
 
-    public void seekTo(int position) {
-        if (lastLyrics == null || lastLyrics.syncedLyrics == null || position < 0 || position >= lastLyrics.syncedLyrics.size()) {
-            return;
-        }
-        SyncedLyricsLine line = lastLyrics.syncedLyrics.get(position);
-        MediaController.getInstance().seekToProgressMs(currentMessageObject, line.timestamp * 1000L);
-        setBrowsing(false);
-    }
-
 
     private void configureNotifications(boolean enable) {
         for (int id : notificationIds) {
