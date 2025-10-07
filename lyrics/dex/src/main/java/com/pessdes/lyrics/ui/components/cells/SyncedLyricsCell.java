@@ -1,6 +1,7 @@
 package com.pessdes.lyrics.ui.components.cells;
 
 import android.content.Context;
+import android.util.TypedValue;
 
 import com.pessdes.lyrics.Util;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
@@ -26,26 +27,26 @@ public class SyncedLyricsCell extends LyricsCell {
         this.setTypeface(LyricsController.getInstance().getTypeface());
     }
 
-    final int NORMAL_SIZE = 36;
-    final int ACTIVATED_SIZE = 42;
+    final int NORMAL_SIZE = 18;
+    final int ACTIVATED_SIZE = 21;
     final int NEXT_SIZE = (NORMAL_SIZE + ACTIVATED_SIZE) / 2;
 
     public void setState(State state) {
         switch (state) {
             case DEACTIVATED:
-                this.setTextSize(NORMAL_SIZE);
+                this.setTextSize(TypedValue.COMPLEX_UNIT_SP, NORMAL_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextGray));
                 break;
             case BROWSING:
-                this.setTextSize(NORMAL_SIZE);
+                this.setTextSize(TypedValue.COMPLEX_UNIT_SP, NORMAL_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 break;
             case NEXT:
-                this.setTextSize(NEXT_SIZE);
+                this.setTextSize(TypedValue.COMPLEX_UNIT_SP, NEXT_SIZE);
                 this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray), Theme.getColor(Theme.key_dialogTextBlack)));
                 break;
             case ACTIVATED:
-                this.setTextSize(ACTIVATED_SIZE);
+                this.setTextSize(TypedValue.COMPLEX_UNIT_SP, ACTIVATED_SIZE);
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 break;
         }

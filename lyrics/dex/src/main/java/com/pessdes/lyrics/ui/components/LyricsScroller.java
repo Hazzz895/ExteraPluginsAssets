@@ -1,14 +1,14 @@
 package com.pessdes.lyrics.ui.components;
 
-import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
-
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
@@ -52,8 +52,8 @@ public class LyricsScroller extends RecyclerListView {
                 LyricsAdapter adapter = (LyricsAdapter) getAdapter();
                 if (adapter == null) return;
 
-                RecyclerView.ViewHolder holder = adapter.createViewHolder(this, 0);
-                adapter.onBindViewHolder(holder, 0);
+                RecyclerView.ViewHolder holder = adapter.createViewHolder(this, adapter.TYPE_TEXT);
+                adapter.onBindViewHolder(holder, 1);
                 View itemView = holder.itemView;
 
                 itemView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -89,7 +89,19 @@ public class LyricsScroller extends RecyclerListView {
         }
 
         if (smooth) {
-            smoothScrollToPosition(line);
+            RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(getContext()) {
+                @Override
+                protected int getVerticalSnapPreference() {
+                    return LinearSmoothScroller.SNAP_TO_START;
+                }
+
+                @Override
+                protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+                    return 100f / displayMetrics.densityDpi;
+                }
+            };
+            smoothScroller.setTargetPosition(line);
+            getLayoutManager().startSmoothScroll(smoothScroller);
         } else {
             LinearLayoutManager layoutManager = (LinearLayoutManager) getLayoutManager();
             if (layoutManager != null) {
