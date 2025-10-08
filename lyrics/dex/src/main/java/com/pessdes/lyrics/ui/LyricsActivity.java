@@ -119,9 +119,34 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         plainLyricsView = new PlainLyricsCell(context);
         plainLyricsScroller.addView(plainLyricsView);
 
+        layout.setForeground(getLayerDrawable(bgColor));
         onMusicLoad();
 
         return fragmentView;
+    }
+
+    private static LayerDrawable getLayerDrawable(int bgColor) {
+        final int gradientHeight = AndroidUtilities.dp(32);
+
+        GradientDrawable topGradient = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{bgColor, Color.TRANSPARENT}
+        );
+        GradientDrawable bottomGradient = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{Color.TRANSPARENT, bgColor}
+        );
+
+        Drawable[] layers = new Drawable[]{topGradient, bottomGradient};
+        LayerDrawable layerDrawable = new LayerDrawable(layers);
+
+        layerDrawable.setLayerGravity(0, Gravity.TOP | Gravity.FILL_HORIZONTAL);
+        layerDrawable.setLayerSize(0, -1, gradientHeight);
+
+        layerDrawable.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
+        layerDrawable.setLayerSize(1, -1, gradientHeight);
+
+        return layerDrawable;
     }
 
     private void onMusicLoad() {
