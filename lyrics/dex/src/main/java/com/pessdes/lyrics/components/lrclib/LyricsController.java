@@ -188,7 +188,7 @@ public class LyricsController {
     }
 
     public static void log(String message) {
-        getInstance().logInternal(message);
+        getInstance().logInternal("[lyrics] " + message);
     }
 
     public static void log(Object object) {
