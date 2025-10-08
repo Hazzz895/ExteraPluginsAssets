@@ -184,16 +184,15 @@ public class LyricsScroller extends RecyclerListView {
                 if (lyricsActivity.isBrowsing()) {
                     lyricsCell.setState(SyncedLyricsCell.State.BROWSING);
                 } else {
+                    var preferedState = SyncedLyricsCell.State.DEACTIVATED;
                     if (lineIndex == currentActiveLine) {
-                        lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
+                        preferedState = SyncedLyricsCell.State.ACTIVATED;
                     }
-                    else {
-                        lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
-                    }
+                    log("State for position " + position + " is " + preferedState + " (" + currentActiveLine + ")");
                 }
                 holder.itemView.setOnClickListener(v -> {
                     if (lyricsActivity.isBrowsing() && line != null) {
-                        MediaController.getInstance().seekToProgressMs(MediaController.getInstance().getPlayingMessageObject(), line.timestamp);
+                        MediaController.getInstance().seekToProgress(MediaController.getInstance().getPlayingMessageObject(), (float) MediaController.getInstance().getProgressMs(MediaController.getInstance().getPlayingMessageObject()) / line.timestamp);
                         lyricsActivity.setBrowsing(false);
                     }
                 });

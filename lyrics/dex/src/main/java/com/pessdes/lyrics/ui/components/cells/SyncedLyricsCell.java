@@ -42,10 +42,10 @@ public class SyncedLyricsCell extends LyricsCell {
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);
                 break;
-            /*case NEXT:
+            case NEXT:
                 this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
                 this.setAlpha(NEXT_ALPHA);
-                break;*/
+                break;
             case ACTIVATED:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);
