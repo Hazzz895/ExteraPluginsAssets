@@ -31,6 +31,8 @@ import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.ActionBarMenuItem;
+import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
@@ -53,10 +55,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private ViewPager viewPager;
     private LyricsPagerAdapter pagerAdapter;
     private TextView statusTextView;
-
     private LyricsScroller lyricsScroller;
     private ScrollView plainLyricsScroller;
     private TextView plainLyricsView;
+    private ActionBarMenuItem swapButton;
 
     private Lyrics lastLyrics;
     private MessageObject currentMessageObject;
@@ -76,8 +78,20 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 if (id == -1) {
                     finishFragment();
                 }
+                else if (id == 1) {
+                    var currentItem = viewPager.getCurrentItem();
+                    var pageCount = 1;
+                    if (viewPager.getAdapter() != null) {
+                        pageCount = viewPager.getAdapter().getCount();
+                    }
+                    var newItem = currentItem == pageCount - 1 ? 0 : currentItem + 1;
+                    viewPager.setCurrentItem(newItem, true);
+                }
             }
         });
+        var menu = actionBar.createMenu();
+        swapButton = menu.addItem(1, R.drawable.msg_photo_text_framed);
+        swapButton.setVisibility(View.GONE);
 
         final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
 
@@ -94,9 +108,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         viewPager = new ViewPager(context);
         pagerAdapter = new LyricsPagerAdapter();
         viewPager.setAdapter(pagerAdapter);
+        viewPager.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
         layout.addView(viewPager, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         lyricsScroller = new LyricsScroller(context, this);
+
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         plainLyricsScroller.setClipToPadding(false);
@@ -113,10 +129,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         String title = null;
         String subTitle = null;
 
-        statusTextView.setText("получение данных");
-        statusTextView.setVisibility(View.VISIBLE);
-        viewPager.setVisibility(View.GONE);
-
         if (!loaded) {
             title = "Загрузка...";
         } else {
@@ -127,9 +139,15 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
             if (isNew) {
+                statusTextView.setText("получение данных");
+                statusTextView.setVisibility(View.VISIBLE);
+                viewPager.setVisibility(View.GONE);
+                swapButton.setVisibility(View.GONE);
+
                 currentLyricsLineIndex = -1;
                 var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
                 final String finalTitle = title;
+
                 Utilities.globalQueue.postRunnable(() -> {
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
                     AndroidUtilities.runOnUIThread(() -> {
@@ -142,6 +160,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                             if (lastLyrics.plainLyrics != null) {
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
                                 pages.add(plainLyricsScroller);
+                            }
+
+                            if (lastLyrics.plainLyrics != null && lastLyrics.syncedLyrics != null) {
+                                swapButton.setVisibility(View.VISIBLE);
                             }
                         }
 
