@@ -250,12 +250,14 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         int newLineIndex = findCurrentLineIndex(lastLyrics, progressSeconds);
 
         if (newLineIndex != currentLyricsLineIndex) {
+            currentLyricsLineIndex = newLineIndex;
+
             if (lyricsScroller.getAdapter() != null) {
-                lyricsScroller.getAdapter().notifyItemRangeChanged(newLineIndex - 3, 7);
+                lyricsScroller.getAdapter().notifyItemRangeChanged(Math.max(0, currentLyricsLineIndex - 3), 7);
             }
 
             if (!isBrowsing) {
-                lyricsScroller.scrollToLine(newLineIndex, true);
+                lyricsScroller.scrollToLine(currentLyricsLineIndex, true);
             }
         }
     }
