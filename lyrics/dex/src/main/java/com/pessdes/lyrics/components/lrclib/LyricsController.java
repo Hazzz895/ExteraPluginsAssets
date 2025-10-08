@@ -10,6 +10,7 @@ import com.pessdes.lyrics.ui.LyricsActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.telegram.ui.ActionBar.BaseFragment;
 
 import java.io.BufferedReader;
@@ -42,6 +43,11 @@ public class LyricsController {
         return instance == null ? new LyricsController() : instance;
     }
     private LyricsController() {}
+
+    /**
+     * Парсит LRC содержимое в список
+     * @param plainSyncedLyrics LRC
+     */
     public List<SyncedLyricsLine> parseSyncedLyrics(String plainSyncedLyrics) {
         if (plainSyncedLyrics == null) return null;
 
@@ -105,7 +111,13 @@ public class LyricsController {
                     continue;
                 }
 
-                Lyrics currentLyrics = Lyrics.fromJson(item);
+                Lyrics currentLyrics = new Lyrics(
+                        item.optString("trackName", null),
+                        item.optString("artistName", null),
+                        item.optDouble("duration", 0),
+                        item.optString("plainLyrics", null),
+                        item.optString("syncedLyrics", null)
+                );
 
                 if (firstNonInstrumental == null) {
                     firstNonInstrumental = currentLyrics;

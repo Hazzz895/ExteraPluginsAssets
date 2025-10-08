@@ -30,6 +30,8 @@ public class LyricsScroller extends RecyclerListView {
     private final LyricsActivity lyricsActivity;
     public static final int shift = 1;
 
+    private static final int MAX_SMOOTH_SCROLL_TIME_MS = 400;
+
     public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
         this.lyricsActivity = lyricsActivity;
@@ -101,6 +103,12 @@ public class LyricsScroller extends RecyclerListView {
                 protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
                     return 100f / displayMetrics.densityDpi;
                 }
+
+                @Override
+                protected int calculateTimeForScrolling(int dx) {
+                    int standardTime = super.calculateTimeForScrolling(dx);
+                    return Math.min(standardTime, MAX_SMOOTH_SCROLL_TIME_MS);
+                }
             };
             smoothScroller.setTargetPosition(line);
             getLayoutManager().startSmoothScroll(smoothScroller);
@@ -168,7 +176,7 @@ public class LyricsScroller extends RecyclerListView {
             } else if (viewType == TYPE_TEXT) {
                 SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
 
-                int lineIndex = position - 1;
+                int lineIndex = position - shift;
                 if (lineIndex < 0 || lineIndex >= lyricsLines.size()) {
                     return;
                 }
@@ -183,8 +191,8 @@ public class LyricsScroller extends RecyclerListView {
 
                 holder.itemView.setOnClickListener(v -> {
                     if (lyricsActivity.isBrowsing() && line != null) {
-                        MediaController.getInstance().seekToProgress(MediaController.getInstance().getPlayingMessageObject(), (float) line.timestamp / MediaController.getInstance().getProgressMs(MediaController.getInstance().getPlayingMessageObject()));
-                        lyricsActivity.setBrowsing(false);
+                        MediaController.getInstance().seekToProgressMs(MediaController.getInstance().getPlayingMessageObject(), line.timestamp);
+                        lyricsActivity.leaveBrowseMode();
                     }
                 });
             }
@@ -208,7 +216,7 @@ public class LyricsScroller extends RecyclerListView {
 
         @Override
         public int getItemCount() {
-            return lyricsLines != null ? lyricsLines.size() + 1 : 0;
+            return lyricsLines != null ? lyricsLines.size() + shift : 0;
         }
     }
 }
