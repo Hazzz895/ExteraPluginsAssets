@@ -90,7 +90,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             }
         });
         var menu = actionBar.createMenu();
-        swapButton = menu.addItem(1, R.drawable.msg_photo_text_framed);
+        swapButton = menu.addItem(1, R.drawable.msg_photo_text_framed3);
         swapButton.setVisibility(View.GONE);
 
         final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
@@ -117,6 +117,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         plainLyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
         plainLyricsScroller.setClipToPadding(false);
         plainLyricsView = new PlainLyricsCell(context);
+        plainLyricsView.setTextIsSelectable(true);
         plainLyricsScroller.addView(plainLyricsView);
 
         layout.setForeground(getLayerDrawable(bgColor));
