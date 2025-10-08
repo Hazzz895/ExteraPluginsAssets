@@ -19,6 +19,7 @@ import android.widget.TextView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
@@ -26,6 +27,7 @@ import com.pessdes.lyrics.ui.components.LyricsScroller;
 import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.NotificationCenter;
@@ -156,7 +158,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         String subTitle = null;
 
         if (!loaded) {
-            title = "Загрузка...";
+            title = LocaleController.getString(R.string.Loading);
         } else {
             MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
             boolean isNew = currentMessageObject != messageObject;
@@ -165,7 +167,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
             if (isNew) {
-                statusTextView.setText("получение данных");
+                statusTextView.setText(PluginController.getInstance().locale("FetchingLyrics"));
                 statusTextView.setVisibility(View.VISIBLE);
                 viewPager.setVisibility(View.GONE);
                 swapButton.setVisibility(View.GONE);
@@ -194,7 +196,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         }
 
                         if (pages.isEmpty()) {
-                            statusTextView.setText("не найден текст");
+                            statusTextView.setText(LocaleController.getString(R.string.NoResult));
                             statusTextView.setVisibility(View.VISIBLE);
                             viewPager.setVisibility(View.GONE);
                         } else {
