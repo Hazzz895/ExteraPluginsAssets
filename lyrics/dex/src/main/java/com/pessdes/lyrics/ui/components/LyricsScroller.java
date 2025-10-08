@@ -166,16 +166,13 @@ public class LyricsScroller extends RecyclerListView {
             int viewType = holder.getItemViewType();
 
             if (viewType == TYPE_TIMER) {
-                TimerCell timerCell = (TimerCell) holder.itemView;
-                log("timerCell.setVisibility()");
+                /*TimerCell timerCell = (TimerCell) holder.itemView;
                 if (lyricsActivity.getCurrentLineIndex() == -1) {
-                    log("VISIBLE");
                     timerCell.setVisibility(View.VISIBLE);
                     timerCell.startAnimation();
                 } else {
-                    log("GONE");
                     timerCell.setVisibility(View.GONE);
-                }
+                }*/ // # TODO fix timer
             } else if (viewType == TYPE_TEXT) {
                 SyncedLyricsCell lyricsCell = (SyncedLyricsCell) holder.itemView;
 

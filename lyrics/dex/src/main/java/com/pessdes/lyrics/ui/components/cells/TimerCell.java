@@ -13,6 +13,9 @@ import android.widget.FrameLayout;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 
+/**
+ * НА ДАННЫЙ МОМЕНТ НЕ РАБОТАЕТ.
+ */
 public class TimerCell extends FrameLayout {
 
     private final CircleView[] circleViews = new CircleView[3];

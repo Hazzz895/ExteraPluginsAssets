@@ -45,7 +45,7 @@ public class SyncedLyricsCell extends LyricsCell {
                 break;
             /*case NEXT:
                 this.setTextColor(Util.applyAlpha(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)), NEXT_ALPHA));
-                break;*/
+                break;*/ // # TODO: fix "Next" state
         }
     }
 }
