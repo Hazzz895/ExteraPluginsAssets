@@ -178,18 +178,8 @@ public class LyricsScroller extends RecyclerListView {
                     lyricsCell.setText(line.text);
                 }
 
-                int currentActiveLine = lyricsActivity.getCurrentLineIndex();
-
-                var preferedState = SyncedLyricsCell.State.DEACTIVATED;
-                if (lyricsActivity.isBrowsing()) {
-                    preferedState = SyncedLyricsCell.State.BROWSING;
-                } else {
-                    if (lineIndex == currentActiveLine) {
-                        preferedState = SyncedLyricsCell.State.ACTIVATED;
-                    }
-                    log("State for position " + position + " is " + preferedState + " (" + currentActiveLine + ")");
-                }
-                lyricsCell.setState(preferedState);
+                var cellState = getState(lineIndex);
+                lyricsCell.setState(cellState);
 
                 holder.itemView.setOnClickListener(v -> {
                     if (lyricsActivity.isBrowsing() && line != null) {
@@ -198,6 +188,22 @@ public class LyricsScroller extends RecyclerListView {
                     }
                 });
             }
+        }
+
+        private SyncedLyricsCell.State getState(int lineIndex) {
+            int currentActiveLine = lyricsActivity.getCurrentLineIndex();
+
+            var cellState = SyncedLyricsCell.State.DEACTIVATED;
+            if (lyricsActivity.isBrowsing()) {
+                cellState = SyncedLyricsCell.State.BROWSING;
+            } else {
+                if (lineIndex == currentActiveLine) {
+                    cellState = SyncedLyricsCell.State.ACTIVATED;
+                } else if (lineIndex == currentActiveLine + 1) {
+                    cellState = SyncedLyricsCell.State.NEXT;
+                }
+            }
+            return cellState;
         }
 
         @Override
