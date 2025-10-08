@@ -1,5 +1,7 @@
 package com.pessdes.lyrics.components;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
+
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 
@@ -20,11 +22,13 @@ public class PluginController {
 
     public static void initPluginController(String moduleName) {
         instance = new PluginController(moduleName);
+        log("Loading plugin from: " + moduleName);
     }
 
     public PyObject getPlugin() {
         if (plugin == null) {
             plugin = Python.getInstance().getModule(moduleName);
+            log("Loaded plugin: " + moduleName);
         }
         return plugin;
     }
@@ -32,6 +36,7 @@ public class PluginController {
     public PyObject getLocaleController() {
         if (localeController == null) {
             localeController = getPlugin().get("locale_controller");
+            log("Loaded locale controller: " + localeController);
         }
         return localeController;
     }
