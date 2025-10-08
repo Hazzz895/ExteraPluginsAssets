@@ -370,6 +370,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             View view = pages.get(position);
+            if (view.getParent() != null) {
+                ((ViewGroup) view.getParent()).removeView(view);
+            }
             container.addView(view);
             return view;
         }
@@ -388,5 +391,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         public boolean isViewFromObject(View view, Object object) {
             return view == object;
         }
+
     }
 }
