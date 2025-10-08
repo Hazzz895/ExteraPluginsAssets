@@ -1,6 +1,7 @@
 package com.pessdes.lyrics.ui.components.cells;
 
 import android.content.Context;
+import android.graphics.Color;
 
 import com.pessdes.lyrics.Util;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
@@ -35,19 +36,22 @@ public class SyncedLyricsCell extends LyricsCell {
     public void setState(State state) {
         switch (state) {
             case DEACTIVATED:
-                this.setTextColor(Theme.getColor(Theme.key_dialogTextGray4));
+                //this.setTextColor(Theme.getColor(Theme.key_dialogTextGray4));
                 this.setAlpha(DEACTIVATED_ALPHA);
+                this.setTextColor(Color.BLUE);
                 break;
             case BROWSING:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);
                 break;
             case NEXT:
-                this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
+                //this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
                 this.setAlpha(NEXT_ALPHA);
+                this.setTextColor(Color.RED);
                 break;
             case ACTIVATED:
-                this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+                //this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+                this.setTextColor(Color.GREEN);
                 this.setAlpha(1F);
                 break;
         }
