@@ -28,7 +28,6 @@ public class SyncedLyricsCell extends LyricsCell {
         this.setTypeface(LyricsController.getInstance().getTypeface());
     }
 
-    // Специально не сделал final, изменяйте это значение через set_private_field если необходимо
     static int TEXT_SIZE = 36;
 
     static final float DEACTIVATED_ALPHA = 0.3F;
@@ -43,10 +42,10 @@ public class SyncedLyricsCell extends LyricsCell {
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);
                 break;
-            case NEXT:
+            /*case NEXT:
                 this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
                 this.setAlpha(NEXT_ALPHA);
-                break;
+                break;*/
             case ACTIVATED:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 this.setAlpha(1F);

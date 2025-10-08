@@ -192,9 +192,8 @@ public class LyricsScroller extends RecyclerListView {
                     }
                 }
                 holder.itemView.setOnClickListener(v -> {
-                    log(MediaController.getInstance().getProgressMs(MediaController.getInstance().getPlayingMessageObject()) + " - " + line.timestamp);
                     if (lyricsActivity.isBrowsing() && line != null) {
-                        MediaController.getInstance().seekToProgressMs(MediaController.getInstance().getPlayingMessageObject(), line.timestamp * 1000L);
+                        MediaController.getInstance().seekToProgressMs(MediaController.getInstance().getPlayingMessageObject(), line.timestamp);
                         lyricsActivity.setBrowsing(false);
                     }
                 });
