@@ -24,7 +24,7 @@ public class TimerCell extends FrameLayout {
     private static final float SCALE_FACTOR = 1.3f;
     private static final float TRANSLATION_Y_DISTANCE = -40f;
 
-    private final int gap;
+    private int gap;
 
     public TimerCell(Context context) {
         this(context, true);
@@ -32,7 +32,7 @@ public class TimerCell extends FrameLayout {
 
     public TimerCell(Context context, boolean animate) {
         super(context);
-        setWillNotDraw(false);
+        /*setWillNotDraw(false);
 
         gap = AndroidUtilities.dp(4);
         final int startColor = Theme.getColor(Theme.key_windowBackgroundWhiteGrayText);
@@ -45,7 +45,7 @@ public class TimerCell extends FrameLayout {
 
         if (animate) {
             post(this::startAnimation);
-        }
+        }*/
     }
 
     public void startAnimation() {
