@@ -1,5 +1,7 @@
 package com.pessdes.lyrics;
 
+import android.graphics.Color;
+
 import org.jetbrains.annotations.Nullable;
 
 public class Util {
@@ -20,4 +22,23 @@ public class Util {
 
         return (r << 16) | (g << 8) | b;
     }
+
+    /**
+     * @param alpha Значение 0т 0 до 1
+     */
+    public static int applyAlpha(int color, double alpha, boolean override) {
+        int baseAlpha = Color.alpha(color);
+        int newAlpha = override
+                ? (int)(255 * alpha)
+                : (int)(baseAlpha * alpha);
+
+        newAlpha = Math.max(0, Math.min(255, newAlpha));
+
+        return Color.argb(newAlpha, Color.red(color), Color.green(color), Color.blue(color));
+    }
+
+    public static int applyAlpha(int color, double alpha) {
+        return applyAlpha(color, alpha, false);
+    }
+
 }

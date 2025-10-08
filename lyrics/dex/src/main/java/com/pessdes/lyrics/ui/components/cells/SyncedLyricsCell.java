@@ -36,23 +36,14 @@ public class SyncedLyricsCell extends LyricsCell {
     public void setState(State state) {
         switch (state) {
             case DEACTIVATED:
-                //this.setTextColor(Theme.getColor(Theme.key_dialogTextGray4));
-                this.setAlpha(DEACTIVATED_ALPHA);
-                this.setTextColor(Color.BLUE);
+                this.setTextColor(Util.applyAlpha(Theme.getColor(Theme.key_dialogTextGray4), DEACTIVATED_ALPHA));
                 break;
             case BROWSING:
+            case ACTIVATED:
                 this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-                this.setAlpha(1F);
                 break;
             case NEXT:
-                //this.setTextColor(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)));
-                this.setAlpha(NEXT_ALPHA);
-                this.setTextColor(Color.RED);
-                break;
-            case ACTIVATED:
-                //this.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-                this.setTextColor(Color.GREEN);
-                this.setAlpha(1F);
+                this.setTextColor(Util.applyAlpha(Util.mixColors(Theme.getColor(Theme.key_dialogTextGray4), Theme.getColor(Theme.key_dialogTextBlack)), NEXT_ALPHA));
                 break;
         }
     }

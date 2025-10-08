@@ -28,7 +28,7 @@ import java.util.List;
 public class LyricsScroller extends RecyclerListView {
     private int itemHeight = 0;
     private final LyricsActivity lyricsActivity;
-    private final int shift = 2;
+    public static final int shift = 1;
 
     public LyricsScroller(Context context, LyricsActivity lyricsActivity) {
         super(context);
@@ -86,7 +86,6 @@ public class LyricsScroller extends RecyclerListView {
     }
 
     public void scrollToLine(int line, boolean smooth) {
-        line += shift;
         if (line < 0 || getAdapter() == null || line >= getAdapter().getItemCount()) {
             return;
         }
