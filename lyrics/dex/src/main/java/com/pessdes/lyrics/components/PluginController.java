@@ -37,6 +37,6 @@ public class PluginController {
     }
 
     public String locale(String key) {
-        return localeController.callAttr("get_string", key).toString();
+        return getLocaleController().callAttr("get_string", key).toString();
     }
 }
