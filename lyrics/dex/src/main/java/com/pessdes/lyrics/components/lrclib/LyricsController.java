@@ -3,6 +3,7 @@ package com.pessdes.lyrics.components.lrclib;
 import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 
+import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
 import com.pessdes.lyrics.ui.LyricsActivity;
@@ -203,5 +204,9 @@ public class LyricsController {
 
     public Typeface getTypeface() {
         return typeface;
+    }
+
+    public void initPluginController(String moduleName) {
+        PluginController.initPluginController(moduleName);
     }
 }
