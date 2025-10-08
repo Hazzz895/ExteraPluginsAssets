@@ -29,7 +29,7 @@ public class SyncedLyricsCell extends LyricsCell {
     }
 
     // Специально не сделал final, изменяйте это значение через set_private_field если необходимо
-    static int TEXT_SIZE = 42;
+    static int TEXT_SIZE = 36;
 
     static final float DEACTIVATED_ALPHA = 0.3F;
     static final float NEXT_ALPHA = (DEACTIVATED_ALPHA + 1) / 3;

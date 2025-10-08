@@ -186,9 +186,8 @@ public class LyricsScroller extends RecyclerListView {
                 } else {
                     if (lineIndex == currentActiveLine) {
                         lyricsCell.setState(SyncedLyricsCell.State.ACTIVATED);
-                    } else if (false/*lineIndex == currentActiveLine + 1*/) {
-                        lyricsCell.setState(SyncedLyricsCell.State.NEXT);
-                    } else {
+                    }
+                    else {
                         lyricsCell.setState(SyncedLyricsCell.State.DEACTIVATED);
                     }
                 }
