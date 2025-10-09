@@ -84,7 +84,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 else if (id == SWAP_BUTTON_ID) {
                     var currentItem = viewPager.getCurrentItem();
                     var pageCount = 1;
-                    
+
                     if (viewPager.getAdapter() != null) {
                         pageCount = viewPager.getAdapter().getCount();
                     }
