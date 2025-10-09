@@ -69,6 +69,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private final Handler browsingHandler = new Handler(Looper.getMainLooper());
 
     private static final long BROWSING_TIMEOUT = 3000;
+    private static final int SWAP_BUTTON_ID = 1;
 
     @Override
     public View createView(Context context) {
@@ -80,19 +81,26 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 if (id == -1) {
                     finishFragment();
                 }
-                else if (id == 1) {
+                else if (id == SWAP_BUTTON_ID) {
                     var currentItem = viewPager.getCurrentItem();
                     var pageCount = 1;
+                    
                     if (viewPager.getAdapter() != null) {
                         pageCount = viewPager.getAdapter().getCount();
                     }
-                    var newItem = currentItem == pageCount - 1 ? 0 : currentItem + 1;
-                    viewPager.setCurrentItem(newItem, true);
+
+                    if (pageCount == 1) {
+                        AndroidUtilities.shakeView(getFragmentView());
+                    }
+                    else {
+                        var newItem = currentItem == pageCount - 1 ? 0 : currentItem + 1;
+                        viewPager.setCurrentItem(newItem, true);
+                    }
                 }
             }
         });
         var menu = actionBar.createMenu();
-        swapButton = menu.addItem(1, R.drawable.msg_photo_text_framed3);
+        swapButton = menu.addItem(SWAP_BUTTON_ID, R.drawable.msg_photo_text_framed3);
         swapButton.setVisibility(View.GONE);
 
         final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
@@ -192,6 +200,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
                             if (lastLyrics.plainLyrics != null && lastLyrics.syncedLyrics != null) {
                                 swapButton.setVisibility(View.VISIBLE);
+                            }
+                            else {
+                                swapButton.setVisibility(View.GONE);
                             }
                         }
 
@@ -350,8 +361,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             onMusicProgressChanged(true);
         } else if (id == NotificationCenter.messagePlayingProgressDidChanged) {
             onMusicProgressChanged(true);
-        } else if (id == NotificationCenter.messagePlayingSpeedChanged) {
-            //lyricsScroller.setSpeed(MediaController.getInstance().getPlaybackSpeed(true));
         }
     }
 
