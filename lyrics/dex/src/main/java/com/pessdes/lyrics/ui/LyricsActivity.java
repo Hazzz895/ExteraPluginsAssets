@@ -197,7 +197,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
                                 pages.add(plainLyricsScroller);
                             }
-
                             if (lastLyrics.plainLyrics != null && lastLyrics.syncedLyrics != null) {
                                 swapButton.setVisibility(View.VISIBLE);
                             }
@@ -286,7 +285,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void onMusicProgressChanged(boolean animated) {
-        if (lyricsScroller == null || viewPager.getVisibility() != View.VISIBLE || lastLyrics == null) {
+        if (lyricsScroller == null || viewPager.getVisibility() != View.VISIBLE || lastLyrics == null || isBrowsing) {
             return;
         }
 
@@ -315,9 +314,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 }
             }
 
-            if (!isBrowsing) {
-                lyricsScroller.scrollToLine(lineIndex, animated);
-            }
+            lyricsScroller.scrollToLine(lineIndex, animated);
         }
     }
 
