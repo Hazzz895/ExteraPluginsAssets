@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class Lyrics {
-    public String trackName;
-    public String artistName;
     public double duration;
     public String plainLyrics;
     public String plainSyncedLyrics;
@@ -18,14 +16,10 @@ public class Lyrics {
     public List<SyncedLyricsLine> syncedLyrics;
 
     public Lyrics(
-            @NotNull String trackName,
-            String artistName,
             double duration,
             String plainLyrics,
             String plainSyncedLyrics
     ) {
-        this.trackName = trackName;
-        this.artistName = artistName;
         this.duration = duration;
         this.plainLyrics = plainLyrics;
         this.plainSyncedLyrics = plainSyncedLyrics;
@@ -33,5 +27,4 @@ public class Lyrics {
             this.syncedLyrics = LyricsController.getInstance().parseSyncedLyrics(plainSyncedLyrics);
         }
     }
-
 }

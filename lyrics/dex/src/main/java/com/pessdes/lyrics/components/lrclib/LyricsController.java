@@ -113,8 +113,6 @@ public class LyricsController {
                 }
 
                 Lyrics currentLyrics = new Lyrics(
-                        item.optString("trackName", null),
-                        item.optString("artistName", null),
                         item.optDouble("duration", 0),
                         item.optString("plainLyrics", null),
                         item.optString("syncedLyrics", null)
