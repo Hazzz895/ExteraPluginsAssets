@@ -6,6 +6,8 @@ import android.graphics.Typeface;
 import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
+import com.pessdes.lyrics.components.lrclib.providers.IProvider;
+import com.pessdes.lyrics.components.lrclib.providers.LrclibProvider;
 import com.pessdes.lyrics.ui.LyricsActivity;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +37,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LyricsController {
+    private static class ProviderDTO {
+        public ProviderDTO(IProvider provider,int priority) {
+            this.provider = provider;
+            this.priority = priority;
+        }
+
+        public int priority;
+        public IProvider provider;
+    }
     private static final LyricsController instance = new LyricsController();
 
     private final Map<String, CompletableFuture<Lyrics>> lyricsFutures = new ConcurrentHashMap<>();
@@ -41,7 +53,7 @@ public class LyricsController {
     private final ExecutorService networkExecutor = Executors.newCachedThreadPool();
 
     public static LyricsController getInstance() {
-        return instance == null ? new LyricsController() : instance;
+        return instance;
     }
     private LyricsController() {}
 
@@ -76,63 +88,48 @@ public class LyricsController {
     private String getCacheKey(String trackName, String artistName, double trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
-    private final String BASE_URL = "https://lrclib.net/api/search";
 
-    private URL getRequestUrl(String trackName, String artistName) throws UnsupportedEncodingException, MalformedURLException {
-        return new URL(BASE_URL + "?track_name=" + URLEncoder.encode(trackName, "UTF-8") + "&artist_name=" + URLEncoder.encode(artistName, "UTF-8"));
+    private final List<ProviderDTO> providers = new ArrayList<>();
+
+    public void addProvider(IProvider provider) {
+        addProvider(provider, 0);
     }
-    @SuppressLint("DefaultLocale")
+
+    public void addProvider(IProvider provider, int priority) {
+        if (
+            provider != null &&
+            providers.stream().noneMatch(x -> x.provider == provider)
+            )
+        {
+            providers.add(new ProviderDTO(provider, priority));
+        }
+    }
+
+    public void removeProvider(IProvider provider) {
+        if (provider != null) {
+            providers.removeIf(x -> x.provider == provider);
+        }
+    }
+
     private Lyrics getLyricsInternal(String trackName, String artistName, double trackDuration) {
         try {
-            HttpURLConnection con = (HttpURLConnection) getRequestUrl(trackName, artistName).openConnection();
-            log("Sending request to: " + con.getURL());
-            con.setRequestMethod("GET");
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(con.getInputStream())
-            );
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-            con.disconnect();
-            var json = new JSONArray(String.valueOf(response));
-            log(String.format("Got %d results", json.length()));
-            if (json.length() == 0) {
-                return null;
+            if (PluginController.getInstance().getVersionCode() < PluginController.Constants.TWO_ZERO) {
+                addProvider(new LrclibProvider());
             }
 
-            Lyrics firstNonInstrumental = null;
-            for (int i = 0; i < json.length(); i++) {
-                var item = json.getJSONObject(i);
+            providers.sort(Comparator.comparingInt(x -> x.priority));
 
-                if (item.optBoolean("instrumental", false)) {
-                    continue;
-                }
-
-                Lyrics currentLyrics = new Lyrics(
-                        item.optDouble("duration", 0),
-                        item.optString("plainLyrics", null),
-                        item.optString("syncedLyrics", null)
-                );
-
-                if (firstNonInstrumental == null) {
-                    firstNonInstrumental = currentLyrics;
-                }
-
-                if (trackDuration > 0 && Math.round(currentLyrics.duration) == Math.round(trackDuration)) {
-                    return currentLyrics;
+            for (var provider : providers) {
+                Lyrics result = provider.provider.seachLyrics(trackName, artistName, trackDuration);
+                if (result != null) {
+                    return result;
                 }
             }
-
-            return firstNonInstrumental;
-
         } catch (Exception ex) {
             log("Exception in getLyricsInternal: " + ex.getMessage());
-            return null;
         }
+
+        return null;
     }
 
     @Nullable
@@ -153,6 +150,13 @@ public class LyricsController {
         }
     }
 
+    public Lyrics createLyrics(double trackDuration, String plainLyrics, String plainSyncedLyrics) {
+        return new Lyrics(
+                trackDuration,
+                plainLyrics,
+                plainSyncedLyrics
+        );
+    }
 
     public LyricsActivity presentLyricsActivity(BaseFragment baseFragment) {
         var activity = new LyricsActivity();
@@ -187,7 +191,7 @@ public class LyricsController {
     }
 
     public static void log(String message) {
-        getInstance().logInternal("[lyrics] " + message);
+        getInstance().logInternal(String.format("[%s] %s", PluginController.getInstance().getModuleName(), message));
     }
 
     public static void log(Object object) {
