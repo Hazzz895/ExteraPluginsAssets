@@ -39,6 +39,7 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Stories.recorder.HintView2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,9 +50,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             NotificationCenter.messagePlayingDidStart,
             NotificationCenter.messagePlayingDidSeek,
             NotificationCenter.messagePlayingPlayStateChanged,
-            NotificationCenter.messagePlayingSpeedChanged,
             NotificationCenter.messagePlayingProgressDidChanged,
-            NotificationCenter.messagePlayingGoingToStop
     };
 
     private ViewPager viewPager;
@@ -118,13 +117,13 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         viewPager = new ViewPager(context);
         pagerAdapter = new LyricsPagerAdapter();
         viewPager.setAdapter(pagerAdapter);
-        viewPager.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
         layout.addView(viewPager, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         lyricsScroller = new LyricsScroller(context, this);
+        lyricsScroller.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
 
         plainLyricsScroller = new ScrollView(context);
-        plainLyricsScroller.setPadding(0, AndroidUtilities.dp(32), 0, AndroidUtilities.dp(32));
+        plainLyricsScroller.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(32), AndroidUtilities.dp(16), AndroidUtilities.dp(32));
         plainLyricsScroller.setClipToPadding(false);
         plainLyricsView = new PlainLyricsCell(context);
         plainLyricsView.setTextIsSelectable(true);
