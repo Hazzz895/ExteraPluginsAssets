@@ -205,8 +205,8 @@ public class LyricsController {
         return PluginController.parseVersion(version);
     }
 
-    public IProvider createSimpleProvider(String name, String id, Utilities.Callback3Return<String, String, Double, Lyrics> onSearchLyrics, int defaultPriority) {
-        return new IProvider() {
+    public void createAndAddSimpleProvider(String name, String id, Utilities.Callback3Return<String, String, Double, Lyrics> onSearchLyrics, int defaultPriority) {
+        var provider = new IProvider() {
             @Override
             public @Nullable Lyrics seachLyrics(@NotNull String trackName, String artistName, double trackDuration) {
                 return onSearchLyrics.run(trackName, artistName, trackDuration);
@@ -227,6 +227,7 @@ public class LyricsController {
                 return defaultPriority;
             }
         };
+        addProvider(provider);
     }
 
     public void addLrclibProvider() {
