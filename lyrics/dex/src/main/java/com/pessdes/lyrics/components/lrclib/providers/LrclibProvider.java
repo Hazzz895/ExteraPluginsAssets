@@ -53,6 +53,7 @@ public class LrclibProvider implements IProvider {
 
             Lyrics match = null;
             for (int i = 0; i < json.length(); i++) {
+                log("iterate number " + i);
                 var item = json.getJSONObject(i);
 
                 if (item.optBoolean("instrumental", false)) {
@@ -67,16 +68,21 @@ public class LrclibProvider implements IProvider {
 
                 if (match == null) {
                     match = currentLyrics;
+                    log("#1");
                 }
 
                 if (trackDuration > 0 && Math.round(currentLyrics.duration) == Math.round(trackDuration)) {
                     match = currentLyrics;
+                    log("#2");
                     break;
                 }
             }
-            
+
+            log("before parse");
             if (match != null && match.plainSyncedLyrics != null) {
+                log("parsing");
                 match.parseSyncedLyricsAsLrc();
+                log("parsed");
             }
 
             return match;
