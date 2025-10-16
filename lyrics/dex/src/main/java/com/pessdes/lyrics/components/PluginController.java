@@ -89,7 +89,7 @@ public class PluginController {
     private static Class<?> pluginsController;
     {
         try {
-            pluginsController = Class.forName("com.exteragram.messenger.utils.AppUtils");
+            pluginsController = Class.forName("com.exteragram.messenger.plugins");
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
