@@ -75,7 +75,7 @@ public class LrclibProvider implements IProvider {
             }
 
             if (match != null && match.plainSyncedLyrics != null) {
-                LyricsController.getInstance().parseSyncedLyrics(match.plainSyncedLyrics);
+                match.parseSyncedLyricsAsLrc();
             }
             return match;
         } catch (Exception ex) {

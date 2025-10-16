@@ -22,4 +22,9 @@ public class Lyrics {
         this.plainLyrics = plainLyrics;
         this.plainSyncedLyrics = plainSyncedLyrics;
     }
+    public void parseSyncedLyricsAsLrc() {
+        if (plainSyncedLyrics != null) {
+            syncedLyrics = LyricsController.getInstance().parseSyncedLyrics(plainSyncedLyrics);
+        }
+    }
 }
