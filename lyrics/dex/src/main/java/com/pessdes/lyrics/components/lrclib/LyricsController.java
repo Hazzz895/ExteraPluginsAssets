@@ -2,6 +2,7 @@ package com.pessdes.lyrics.components.lrclib;
 
 import android.graphics.Typeface;
 
+import com.chaquo.python.PyObject;
 import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
@@ -233,5 +234,9 @@ public class LyricsController {
     public void addLrclibProvider() {
         var provider = new LrclibProvider();
         addProvider(provider);
+    }
+
+    public PyObject getReachTextPlugin() {
+        return PluginController.getInstance().getPlugin();
     }
 }
