@@ -56,6 +56,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private ViewPager viewPager;
     private LyricsPagerAdapter pagerAdapter;
     private TextView statusTextView;
+    private FrameLayout lyricsScrollerLayout;
     private LyricsScroller lyricsScroller;
     private ScrollView plainLyricsScroller;
     private TextView plainLyricsView;
@@ -120,7 +121,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         layout.addView(viewPager, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         lyricsScroller = new LyricsScroller(context, this);
-        lyricsScroller.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
+        lyricsScrollerLayout = new FrameLayout(context);
+        lyricsScrollerLayout.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
+        lyricsScrollerLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         plainLyricsScroller = new ScrollView(context);
         plainLyricsScroller.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(32), AndroidUtilities.dp(16), AndroidUtilities.dp(32));
@@ -190,7 +193,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         if (lastLyrics != null) {
                             if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
                                 lyricsScroller.setLyrics(lastLyrics);
-                                pages.add(lyricsScroller);
+                                pages.add(lyricsScrollerLayout);
                             }
                             if (lastLyrics.plainLyrics != null) {
                                 plainLyricsView.setText(lastLyrics.plainLyrics);
