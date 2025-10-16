@@ -70,16 +70,15 @@ public class LrclibProvider implements IProvider {
                 }
 
                 if (trackDuration > 0 && Math.round(currentLyrics.duration) == Math.round(trackDuration)) {
-                    return currentLyrics;
+                    match = currentLyrics;
+                    break;
                 }
             }
-
-            log("match");
+            
             if (match != null && match.plainSyncedLyrics != null) {
-                log("parsing ");
                 match.parseSyncedLyricsAsLrc();
-                log("parsed " + match.syncedLyrics.size());
             }
+
             return match;
         } catch (Exception ex) {
             return null;
