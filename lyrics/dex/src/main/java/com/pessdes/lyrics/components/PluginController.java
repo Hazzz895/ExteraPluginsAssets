@@ -181,4 +181,11 @@ public class PluginController {
             throw new RuntimeException(e);
         }
     }
+    private static final String PROVIDER_ENABLE_TAMPLATE = "__%s_enabled__";
+    public boolean isProviderEnabled(String providerId) {
+        return getPluginSettingBoolean(String.format(PROVIDER_ENABLE_TAMPLATE, providerId), true);
+    }
+    public void setProviderEnabled(String providerId, boolean enable) {
+        setPluginSettingBoolean(String.format(PROVIDER_ENABLE_TAMPLATE, providerId), enable);
+    }
 }

@@ -39,10 +39,7 @@ public class LyricsController {
         return instance;
     }
     private LyricsController() {
-        if (PluginController.getInstance().getVersionCode() < PluginController.Constants.TWO_ZERO) {
-            log("ADDING FROM CTR LRCLIB PROVIDER");
-            addLrclibProvider();
-        }
+        addLrclibProvider();
     }
 
     /**
@@ -233,7 +230,6 @@ public class LyricsController {
     }
 
     public void addLrclibProvider() {
-        log("ADDING LRCLIB PROVIDER");
         var provider = new LrclibProvider();
         addProvider(provider);
     }
