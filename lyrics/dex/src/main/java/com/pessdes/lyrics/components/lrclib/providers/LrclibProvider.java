@@ -74,8 +74,11 @@ public class LrclibProvider implements IProvider {
                 }
             }
 
+            log("match");
             if (match != null && match.plainSyncedLyrics != null) {
+                log("parsing ");
                 match.parseSyncedLyricsAsLrc();
+                log("parsed " + match.syncedLyrics.size());
             }
             return match;
         } catch (Exception ex) {
