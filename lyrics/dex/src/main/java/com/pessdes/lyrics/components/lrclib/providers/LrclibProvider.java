@@ -87,4 +87,9 @@ public class LrclibProvider implements IProvider {
     public @Nullable String getName() {
         return "LRCLib.net";
     }
+
+    @Override
+    public @Nullable String getId() {
+        return "lrclib";
+    }
 }

@@ -1,6 +1,5 @@
 package com.pessdes.lyrics.components.lrclib;
 
-import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 
 import com.pessdes.lyrics.components.PluginController;
@@ -12,23 +11,16 @@ import com.pessdes.lyrics.ui.LyricsActivity;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -37,15 +29,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LyricsController {
-    private static class ProviderDTO {
-        public ProviderDTO(IProvider provider,int priority) {
-            this.provider = provider;
-            this.priority = priority;
-        }
-
-        public int priority;
-        public IProvider provider;
-    }
     private static final LyricsController instance = new LyricsController();
 
     private final Map<String, CompletableFuture<Lyrics>> lyricsFutures = new ConcurrentHashMap<>();
@@ -55,7 +38,11 @@ public class LyricsController {
     public static LyricsController getInstance() {
         return instance;
     }
-    private LyricsController() {}
+    private LyricsController() {
+        if (PluginController.getInstance().getVersionCode() < PluginController.Constants.TWO_ZERO) {
+            addLrclibProvider();
+        }
+    }
 
     /**
      * Парсит LRC содержимое в список
@@ -89,38 +76,38 @@ public class LyricsController {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
 
-    private final List<ProviderDTO> providers = new ArrayList<>();
+    private final List<IProvider> providers = new ArrayList<>();
 
     public void addProvider(IProvider provider) {
-        addProvider(provider, 0);
-    }
-
-    public void addProvider(IProvider provider, int priority) {
         if (
-            provider != null &&
-            providers.stream().noneMatch(x -> x.provider == provider)
+                provider != null &&
+                providers.stream().noneMatch(x -> Objects.equals(x.getId(), provider.getId()))
             )
         {
-            providers.add(new ProviderDTO(provider, priority));
+            lyricsFutures.entrySet().removeIf(entry -> {
+                CompletableFuture<Lyrics> future = entry.getValue();
+                return future.isDone() && future.getNow(null) == null;
+            });
+            providers.add(provider);
         }
     }
 
     public void removeProvider(IProvider provider) {
         if (provider != null) {
-            providers.removeIf(x -> x.provider == provider);
+            removeProvider(provider.getId());
         }
+    }
+
+    public void removeProvider(String id) {
+        providers.removeIf(x -> Objects.equals(x.getId(), id));
     }
 
     private Lyrics getLyricsInternal(String trackName, String artistName, double trackDuration) {
         try {
-            if (PluginController.getInstance().getVersionCode() < PluginController.Constants.TWO_ZERO) {
-                addProvider(new LrclibProvider());
-            }
-
-            providers.sort(Comparator.comparingInt(x -> x.priority));
+            providers.sort(Comparator.comparingInt(IProvider::getPriority));
 
             for (var provider : providers) {
-                Lyrics result = provider.provider.seachLyrics(trackName, artistName, trackDuration);
+                Lyrics result = provider.seachLyrics(trackName, artistName, trackDuration);
                 if (result != null) {
                     return result;
                 }
@@ -210,5 +197,42 @@ public class LyricsController {
 
     public void initPluginController(String moduleName) {
         PluginController.initPluginController(moduleName);
+    }
+
+    public int getCurrentVersionCode() {
+        return PluginController.getInstance().getVersionCode();
+    }
+
+    public int parseVersionCode(String version) {
+        return PluginController.parseVersion(version);
+    }
+
+    public IProvider createSimpleProvider(String name, String id, Utilities.Callback3Return<String, String, Double, Lyrics> onSearchLyrics, int defaultPriority) {
+        return new IProvider() {
+            @Override
+            public @Nullable Lyrics seachLyrics(@NotNull String trackName, String artistName, double trackDuration) {
+                return onSearchLyrics.run(trackName, artistName, trackDuration);
+            }
+
+            @Override
+            public @Nullable String getName() {
+                return name;
+            }
+
+            @Override
+            public @Nullable String getId() {
+                return id;
+            }
+
+            @Override
+            public int getDefaultPriority() {
+                return defaultPriority;
+            }
+        };
+    }
+
+    public void addLrclibProvider() {
+        var provider = new LrclibProvider();
+        addProvider(provider);
     }
 }
