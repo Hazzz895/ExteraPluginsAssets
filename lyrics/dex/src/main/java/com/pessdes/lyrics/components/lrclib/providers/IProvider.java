@@ -14,8 +14,9 @@ public interface IProvider {
         return 0;
     }
     default int getPriority() {
-        return PluginController.getInstance().getPluginSettingInt(
+        /*return PluginController.getInstance().getPluginSettingInt(
                     String.format("__%s_priority__", getId()),
-                    getDefaultPriority());
+                    getDefaultPriority());*/
+        return getDefaultPriority();
     }
 }

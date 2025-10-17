@@ -86,7 +86,7 @@ public class PluginController {
         return result;
     }
 
-    private static Class<?> pluginsController;
+    /*private static Class<?> pluginsController;
     {
         try {
             pluginsController = Class.forName("com.exteragram.messenger.plugins.PluginController");
@@ -187,5 +187,5 @@ public class PluginController {
     }
     public void setProviderEnabled(String providerId, boolean enable) {
         setPluginSettingBoolean(String.format(PROVIDER_ENABLE_TAMPLATE, providerId), enable);
-    }
+    }*/
 }
