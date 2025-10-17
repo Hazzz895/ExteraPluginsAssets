@@ -9,10 +9,12 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -38,7 +40,9 @@ import org.telegram.ui.ActionBar.ActionBarMenuSubItem;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Charts.data.ChartData;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.StickerImageView;
 import org.telegram.ui.Stories.recorder.HintView2;
 
 import java.util.ArrayList;
@@ -55,7 +59,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     private ViewPager viewPager;
     private LyricsPagerAdapter pagerAdapter;
-    private TextView statusTextView;
+    private LinearLayout statusLayout;
+    private StickerImageView statusStickerImageView;
+    private TextView statusTitle;
+    private TextView statusSubtitle;
     private FrameLayout lyricsScrollerLayout;
     private LyricsScroller lyricsScroller;
     private ScrollView plainLyricsScroller;
@@ -109,11 +116,24 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         FrameLayout layout = (FrameLayout) fragmentView;
         layout.setBackgroundColor(bgColor);
 
-        statusTextView = new TextView(context);
-        statusTextView.setTextSize(16);
-        statusTextView.setGravity(Gravity.CENTER);
-        statusTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
-        layout.addView(statusTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        statusLayout = new LinearLayout(context);
+        statusLayout.setOrientation(LinearLayout.VERTICAL);
+        statusLayout.setGravity(Gravity.CENTER);
+
+        statusStickerImageView = new StickerImageView(context, currentAccount);
+        statusStickerImageView.setStickerPackName("Alegquin109"); // крутой пак с уточками (https://t.me/addstickers/Alegquin109)
+        statusLayout.addView(statusStickerImageView, LayoutHelper.createLinear(117, 117, Gravity.CENTER_HORIZONTAL));
+
+        statusTitle = new TextView(context);
+        statusTitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
+        statusTitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        statusLayout.addView(statusTitle, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 0, 12, 0, 0));
+
+        statusSubtitle = new TextView(context);
+        statusTitle.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+        statusTitle.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
+        statusLayout.addView(statusTitle, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 0, 8, 0, 0));
+        layout.addView(statusLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 46, 0, 46, 30));
 
         viewPager = new ViewPager(context);
         pagerAdapter = new LyricsPagerAdapter();
@@ -177,8 +197,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
             if (isNew) {
-                statusTextView.setText(PluginController.getInstance().locale("FetchingLyrics"));
-                statusTextView.setVisibility(View.VISIBLE);
+                setStatus(110, LocaleController.getString(R.string.Gift2ResaleFiltersSearch), PluginController.getInstance().locale("FetchingLyrics"));
                 viewPager.setVisibility(View.GONE);
                 swapButton.setVisibility(View.GONE);
 
@@ -208,11 +227,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         }
 
                         if (pages.isEmpty()) {
-                            statusTextView.setText(LocaleController.getString(R.string.NoResult));
-                            statusTextView.setVisibility(View.VISIBLE);
+                            setStatus(66, LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)));
                             viewPager.setVisibility(View.GONE);
                         } else {
-                            statusTextView.setVisibility(View.GONE);
+                            hideStatus();
                             viewPager.setVisibility(View.VISIBLE);
                             pagerAdapter.setPages(pages);
                             if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
@@ -229,6 +247,34 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         actionBar.setSubtitle(subTitle);
     }
 
+    private void hideStatus() {
+        setStatus(-1, null, null);
+    }
+
+    private void setStatus(int strickerNum, String title, String subtitle) {
+        if (title == null && subtitle == null && strickerNum < 0) {
+            statusLayout.setVisibility(View.GONE);
+            return;
+        }
+
+        statusLayout.setVisibility(View.VISIBLE);
+        statusStickerImageView.setVisibility(strickerNum < 0 ? View.GONE : View.VISIBLE);
+        statusTitle.setVisibility(title == null ? View.GONE : View.VISIBLE);
+        statusSubtitle.setVisibility(title == null ? View.GONE : View.VISIBLE);
+
+        if (title != null) {
+            statusTitle.setText(title);
+        }
+        if (subtitle != null) {
+            statusSubtitle.setText(subtitle);
+        }
+
+        statusLayout.setAlpha(0);
+        statusLayout.animate()
+                .alpha(1)
+                .setDuration(300)
+                .start();
+    }
     public void setBrowsing(boolean browsing) {
         isBrowsing = browsing;
         browsingHandler.removeCallbacks(this::leaveBrowseMode);
