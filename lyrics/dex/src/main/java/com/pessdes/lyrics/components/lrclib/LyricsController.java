@@ -77,7 +77,7 @@ public class LyricsController {
 
     private final List<IProvider> providers = new ArrayList<>();
 
-    public void addProvider(IProvider provider) {
+    public boolean addProvider(IProvider provider) {
         if (
                 provider != null &&
                 providers.stream().noneMatch(x -> Objects.equals(x.getId(), provider.getId()))
@@ -88,13 +88,9 @@ public class LyricsController {
                 return future.isDone() && future.getNow(null) == null;
             });
             providers.add(provider);
+            return true;
         }
-    }
-
-    public void removeProvider(IProvider provider) {
-        if (provider != null) {
-            removeProvider(provider.getId());
-        }
+        return false;
     }
 
     public void removeProvider(String id) {
@@ -206,7 +202,7 @@ public class LyricsController {
         return PluginController.parseVersion(version);
     }
 
-    public void createAndAddSimpleProvider(String name, String id, Utilities.Callback3Return<String, String, Double, Lyrics> onSearchLyrics, int defaultPriority) {
+    public boolean createAndAddSimpleProvider(String name, String id, Utilities.Callback3Return<String, String, Double, Lyrics> onSearchLyrics, int defaultPriority) {
         var provider = new IProvider() {
             @Override
             public @Nullable Lyrics seachLyrics(@NotNull String trackName, String artistName, double trackDuration) {
@@ -228,12 +224,12 @@ public class LyricsController {
                 return defaultPriority;
             }
         };
-        addProvider(provider);
+        return addProvider(provider);
     }
 
-    public void addLrclibProvider() {
+    public boolean addLrclibProvider() {
         var provider = new LrclibProvider();
-        addProvider(provider);
+        return addProvider(provider);
     }
 
     public PyObject getReachTextPlugin() {
