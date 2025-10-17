@@ -118,7 +118,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
         statusLayout = new LinearLayout(context);
         statusLayout.setOrientation(LinearLayout.VERTICAL);
-        statusLayout.setGravity(Gravity.CENTER);
 
         statusStickerImageView = new StickerImageView(context, currentAccount);
         statusStickerImageView.setStickerPackName("Alegquin109"); // крутой пак с уточками (https://t.me/addstickers/Alegquin109)
