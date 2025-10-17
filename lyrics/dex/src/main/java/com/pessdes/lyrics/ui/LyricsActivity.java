@@ -261,6 +261,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         statusTitle.setVisibility(title == null ? View.GONE : View.VISIBLE);
         statusSubtitle.setVisibility(title == null ? View.GONE : View.VISIBLE);
 
+        if (strickerNum >= 0) {
+            statusStickerImageView.setStickerNum(strickerNum);
+        }
         if (title != null) {
             statusTitle.setText(title);
         }
