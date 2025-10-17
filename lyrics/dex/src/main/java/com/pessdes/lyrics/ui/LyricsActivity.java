@@ -180,7 +180,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
             if (isNew) {
-                setStatus(StickerEmptyView.STICKER_TYPE_SEARCH, LocaleController.getString(R.string.Gift2ResaleFiltersSearch), PluginController.getInstance().locale("FetchingLyrics"));
+                setStatus(LocaleController.getString(R.string.Gift2ResaleFiltersSearch), PluginController.getInstance().locale("FetchingLyrics"));
                 viewPager.setVisibility(View.GONE);
                 swapButton.setVisibility(View.GONE);
 
@@ -210,7 +210,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         }
 
                         if (pages.isEmpty()) {
-                            setStatus(StickerEmptyView.STICKER_TYPE_DONE, LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)));
+                            setStatus(LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)));
                             viewPager.setVisibility(View.GONE);
                         } else {
                             hideStatus();
@@ -231,11 +231,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void hideStatus() {
-        setStatus(-1, null, null);
+        setStatus(null, null);
     }
 
-    private void setStatus(int stickerNum, String title, String subtitle) {
-        if (title == null && subtitle == null && stickerNum < 0) {
+    private void setStatus(String title, String subtitle) {
+        if (title == null && subtitle == null) {
             statusStickerView.setVisibility(View.GONE);
             return;
         }
@@ -244,9 +244,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         statusStickerView.title.setVisibility(title == null ? View.GONE : View.VISIBLE);
         statusStickerView.subtitle.setVisibility(title == null ? View.GONE : View.VISIBLE);
 
-        if (stickerNum >= 0) {
-            statusStickerView.setStickerType(stickerNum);
-        }
         if (title != null) {
             statusStickerView.title.setText(title);
         }
