@@ -86,6 +86,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     private int currentLyricsLineIndex = -1;
     private boolean isBrowsing = false;
     private final Handler browsingHandler = new Handler(Looper.getMainLooper());
+    private boolean exception = false;
 
     private static final long BROWSING_TIMEOUT = 3000;
     private static final int SWAP_BUTTON_ID = 1;
@@ -203,40 +204,43 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                 currentLyricsLineIndex = -1;
                 var duration = MediaController.getInstance().getPlayingMessageObject().getDuration();
                 final String finalTitle = title;
+                exception = false;
 
                 Utilities.globalQueue.postRunnable(() -> {
                     lastLyrics = LyricsController.getInstance().getLyrics(finalTitle, authors, duration);
-                    AndroidUtilities.runOnUIThread(() -> {
-                        List<View> pages = new ArrayList<>();
-                        if (lastLyrics != null) {
-                            if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
-                                lyricsScroller.setLyrics(lastLyrics);
-                                pages.add(lyricsScrollerLayout);
-                            }
-                            if (lastLyrics.plainLyrics != null) {
-                                plainLyricsView.setText(lastLyrics.plainLyrics);
-                                pages.add(plainLyricsScroller);
-                            }
-                            if (lastLyrics.plainLyrics != null && lastLyrics.syncedLyrics != null) {
-                                swapButton.setVisibility(View.VISIBLE);
-                            }
-                            else {
-                                swapButton.setVisibility(View.GONE);
-                            }
-                        }
 
-                        if (pages.isEmpty()) {
-                            setStatus(STICKER_TYPE_NOT_FOUND, LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)), null);
-                            viewPager.setVisibility(View.GONE);
-                        } else {
-                            hideStatus();
-                            viewPager.setVisibility(View.VISIBLE);
-                            pagerAdapter.setPages(pages);
-                            if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
-                                lyricsScroller.post(() -> onMusicProgressChanged(false));
+                    if (!exception) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            List<View> pages = new ArrayList<>();
+                            if (lastLyrics != null) {
+                                if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
+                                    lyricsScroller.setLyrics(lastLyrics);
+                                    pages.add(lyricsScrollerLayout);
+                                }
+                                if (lastLyrics.plainLyrics != null) {
+                                    plainLyricsView.setText(lastLyrics.plainLyrics);
+                                    pages.add(plainLyricsScroller);
+                                }
+                                if (lastLyrics.plainLyrics != null && lastLyrics.syncedLyrics != null) {
+                                    swapButton.setVisibility(View.VISIBLE);
+                                } else {
+                                    swapButton.setVisibility(View.GONE);
+                                }
                             }
-                        }
-                    });
+
+                            if (pages.isEmpty()) {
+                                setStatus(STICKER_TYPE_NOT_FOUND, LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)), null);
+                                viewPager.setVisibility(View.GONE);
+                            } else {
+                                hideStatus();
+                                viewPager.setVisibility(View.VISIBLE);
+                                pagerAdapter.setPages(pages);
+                                if (lastLyrics.syncedLyrics != null && !lastLyrics.syncedLyrics.isEmpty()) {
+                                    lyricsScroller.post(() -> onMusicProgressChanged(false));
+                                }
+                            }
+                        });
+                    }
                 });
             } else {
                 onMusicProgressChanged(false);
