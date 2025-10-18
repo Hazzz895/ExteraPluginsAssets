@@ -5,6 +5,7 @@ import android.graphics.Color;
 import org.jetbrains.annotations.Nullable;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 
 import java.lang.reflect.Field;
@@ -72,6 +73,6 @@ public class Util {
     }
 
     public static void post(int id, Object... args) {
-        AndroidUtilities.runOnUIThread(() -> NotificationCenter.getGlobalInstance().postNotificationName(id, args));
+        AndroidUtilities.runOnUIThread(() -> NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(id, args));
     }
 }
