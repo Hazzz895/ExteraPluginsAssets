@@ -4,6 +4,8 @@ import android.graphics.Color;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+
 public class Util {
     public static String trimStringWithEllipsis(@Nullable String str, int maxLength) {
         if (str == null) {
@@ -41,4 +43,28 @@ public class Util {
         return applyAlpha(color, alpha, false);
     }
 
+    public static Object getPrivateField(Object target, String fieldName) {
+        try {
+            Class<?> clazz = target.getClass();
+            Field field = null;
+
+            while (clazz != null) {
+                try {
+                    field = clazz.getDeclaredField(fieldName);
+                    break;
+                } catch (NoSuchFieldException e) {
+                    clazz = clazz.getSuperclass();
+                }
+            }
+
+            if (field == null) {
+                throw new NoSuchFieldException("Field '" + fieldName + "' not found");
+            }
+
+            field.setAccessible(true);
+            return field.get(target);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get field '" + fieldName + "'", e);
+        }
+    }
 }
