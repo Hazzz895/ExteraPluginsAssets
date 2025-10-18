@@ -3,6 +3,7 @@ package com.pessdes.lyrics.components.lrclib;
 import android.graphics.Typeface;
 
 import com.chaquo.python.PyObject;
+import com.pessdes.lyrics.Util;
 import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
@@ -12,7 +13,6 @@ import com.pessdes.lyrics.ui.LyricsActivity;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 
@@ -106,7 +106,7 @@ public class LyricsController {
             providers.sort(Comparator.comparingInt(IProvider::getPriority));
 
             for (var provider : providers) {
-                NotificationCenter.getGlobalInstance().postNotificationName(searchingProvider, provider, getKey(trackName, artistName, trackDuration));
+                Util.post(searchingProvider, provider, getKey(trackName, artistName, trackDuration));
                 Lyrics result = provider.seachLyrics(trackName, artistName, trackDuration);
                 if (result != null) {
                     return result;
@@ -114,7 +114,7 @@ public class LyricsController {
             }
         } catch (Exception e) {
             log("Exception in getLyricsInternal: " + e.getMessage());
-            NotificationCenter.getGlobalInstance().postNotificationName(exceptionWhileSearching, e, getKey(trackName, artistName, trackDuration));
+            Util.post(exceptionWhileSearching, e, getKey(trackName, artistName, trackDuration));
         }
 
         return null;
@@ -133,7 +133,7 @@ public class LyricsController {
             return result;
         } catch (Exception e) {
             log("Exception while waiting for lyrics future: " + e.getMessage());
-            NotificationCenter.getGlobalInstance().postNotificationName(exceptionWhileSearching, e, key);
+            Util.post(exceptionWhileSearching, e, key);
             lyricsFutures.remove(key, future);
             return null;
         }
