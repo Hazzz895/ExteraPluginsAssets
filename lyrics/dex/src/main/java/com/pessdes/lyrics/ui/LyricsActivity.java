@@ -1,5 +1,6 @@
 package com.pessdes.lyrics.ui;
 
+import static com.pessdes.lyrics.components.lrclib.LyricsController.exceptionWhileSearching;
 import static com.pessdes.lyrics.components.lrclib.LyricsController.log;
 
 import android.content.Context;
@@ -21,18 +22,25 @@ import android.widget.TextView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.pessdes.lyrics.Util;
 import com.pessdes.lyrics.components.PluginController;
 import com.pessdes.lyrics.components.lrclib.LyricsController;
 import com.pessdes.lyrics.components.lrclib.dto.Lyrics;
 import com.pessdes.lyrics.components.lrclib.dto.SyncedLyricsLine;
+import com.pessdes.lyrics.components.lrclib.providers.IProvider;
 import com.pessdes.lyrics.ui.components.LyricsScroller;
 import com.pessdes.lyrics.ui.components.cells.PlainLyricsCell;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.DocumentObject;
+import org.telegram.messenger.ImageLocation;
+import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.ActionBarMenuItem;
@@ -41,13 +49,17 @@ import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Charts.data.ChartData;
+import org.telegram.ui.Components.Bulletin;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.StickerEmptyView;
+import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.Components.StickerImageView;
 import org.telegram.ui.Stories.recorder.HintView2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class LyricsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private final int[] notificationIds = new int[]{
@@ -56,6 +68,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             NotificationCenter.messagePlayingDidSeek,
             NotificationCenter.messagePlayingPlayStateChanged,
             NotificationCenter.messagePlayingProgressDidChanged,
+            LyricsController.searchingProvider,
+            LyricsController.exceptionWhileSearching
     };
 
     private ViewPager viewPager;
@@ -75,6 +89,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     private static final long BROWSING_TIMEOUT = 3000;
     private static final int SWAP_BUTTON_ID = 1;
+    private static final int STICKER_TYPE_NOT_FOUND = 6767;
+    private static final int STICKER_TYPE_EXCEPTION = 6768;
 
     @Override
     public View createView(Context context) {
@@ -180,7 +196,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             var authors = messageObject.getMusicAuthor();
             subTitle = authors;
             if (isNew) {
-                setStatus(LocaleController.getString(R.string.Gift2ResaleFiltersSearch), PluginController.getInstance().locale("FetchingLyrics"));
+                setStatus(StickerEmptyView.STICKER_TYPE_SEARCH, LocaleController.getString(R.string.Gift2ResaleFiltersSearch), PluginController.getInstance().locale("FetchingLyrics"), null);
                 viewPager.setVisibility(View.GONE);
                 swapButton.setVisibility(View.GONE);
 
@@ -210,7 +226,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                         }
 
                         if (pages.isEmpty()) {
-                            setStatus(LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)));
+                            setStatus(STICKER_TYPE_NOT_FOUND, LocaleController.getString(R.string.NoResult), String.format(LocaleController.getString(R.string.NoResultFoundForTag), String.format("«%s - %s»", finalTitle, authors)), null);
                             viewPager.setVisibility(View.GONE);
                         } else {
                             hideStatus();
@@ -231,11 +247,21 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void hideStatus() {
-        setStatus(null, null);
+        setStatus(-1, null, null, null);
     }
 
-    private void setStatus(String title, String subtitle) {
-        if (title == null && subtitle == null) {
+    private class StatusButtonDTO {
+        public View.OnClickListener clickListener;
+        public String title;
+
+        public StatusButtonDTO(View.OnClickListener clickListener, String title) {
+            this.clickListener = clickListener;
+            this.title = title;
+        }
+    }
+
+    private void setStatus(int type, String title, String subtitle, StatusButtonDTO button) {
+        if (title == null && subtitle == null && type >= 0) {
             statusStickerView.setVisibility(View.GONE);
             return;
         }
@@ -243,6 +269,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         statusStickerView.setVisibility(View.VISIBLE);
         statusStickerView.title.setVisibility(title == null ? View.GONE : View.VISIBLE);
         statusStickerView.subtitle.setVisibility(title == null ? View.GONE : View.VISIBLE);
+        statusStickerView.button.setVisibility(button == null ? View.GONE : View.VISIBLE);
 
         if (title != null) {
             statusStickerView.title.setText(title);
@@ -250,7 +277,54 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         if (subtitle != null) {
             statusStickerView.subtitle.setText(subtitle);
         }
+        if (button != null) {
+            statusStickerView.button.setText(button.title, true);
+            statusStickerView.button.setOnClickListener(button.clickListener);
+        }
 
+        if (type == STICKER_TYPE_NOT_FOUND) {
+            setCustomStickerToStatus("Alegquin109", 66);
+        }
+        else if (type == STICKER_TYPE_EXCEPTION) {
+            setCustomStickerToStatus("⛔️");
+        }
+    }
+    private void setCustomStickerToStatus(String imageFilter, TLRPC.Document document, TLRPC.TL_messages_stickerSet set) {
+        if (!LiteMode.isEnabled(LiteMode.FLAGS_ANIMATED_STICKERS)) {
+            imageFilter += "_firstframe";
+        }
+
+        if (document != null) {
+            SvgHelper.SvgDrawable svgThumb = DocumentObject.getSvgThumb(document.thumbs, (int) Util.getPrivateField(statusStickerView, "colorKey1"), 0.2f);
+            if (svgThumb != null) {
+                svgThumb.overrideWidthAndHeight(512, 512);
+            }
+
+            ImageLocation imageLocation = ImageLocation.getForDocument(document);
+            statusStickerView.stickerView.setImage(imageLocation, imageFilter, "tgs", svgThumb, set);
+            statusStickerView.stickerView.getImageReceiver().setAutoRepeat(2);
+        } else {
+            if (set != null) {
+                MediaDataController.getInstance(currentAccount).loadStickersByEmojiOrName(set.set.short_name, false, set == null);
+            }
+            statusStickerView.stickerView.getImageReceiver().clearImage();
+        }
+    }
+    private void setCustomStickerToStatus(String packName, int stickerNum) {
+        TLRPC.Document document = null;
+        TLRPC.TL_messages_stickerSet set = null;
+        set = MediaDataController.getInstance(currentAccount).getStickerSetByName(packName);
+        if (set == null) {
+            set = MediaDataController.getInstance(currentAccount).getStickerSetByEmojiOrName(packName);
+        }
+        if (set != null && stickerNum >= 0 && stickerNum < set.documents.size()) {
+            document = set.documents.get(stickerNum);
+        }
+
+        setCustomStickerToStatus("130_130", document, set);
+    }
+    private void setCustomStickerToStatus(String emoji) {
+        setCustomStickerToStatus(null, MediaDataController.getInstance(currentAccount).getEmojiAnimatedSticker(emoji), null);
     }
     public void setBrowsing(boolean browsing) {
         isBrowsing = browsing;
@@ -383,7 +457,32 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             onMusicProgressChanged(true);
         } else if (id == NotificationCenter.messagePlayingProgressDidChanged) {
             onMusicProgressChanged(true);
+        } else if (id == LyricsController.searchingProvider) {
+            IProvider provider = (IProvider) args[0];
+            String key = (String) args[1];
+            if (provider == null || !isCurrentMusic(key) || provider.getName() == null) {
+                return;
+            }
+            setStatus(StickerEmptyView.STICKER_TYPE_SEARCH, LocaleController.getString(R.string.Gift2ResaleFiltersSearch), String.format(PluginController.getInstance().locale("FetchingLyrics") + " (%s)", provider.getName()), null);
+        } else if (id == LyricsController.exceptionWhileSearching) {
+            Exception e = (Exception) args[0];
+            String key = (String) args[1];
+            if (e == null || !isCurrentMusic(key)) {
+                return;
+            }
+            final String msg = e.getLocalizedMessage();
+            setStatus(exceptionWhileSearching, LocaleController.getString(R.string.ErrorOccurred), LocaleController.getString(R.string.SafetyNetErrorOccurred), new StatusButtonDTO(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    AndroidUtilities.addToClipboard(msg);
+                    BulletinFactory.of(LyricsActivity.this).createCopyBulletin(LocaleController.getString(R.string.CodeCopied)).show();
+                }
+            }, LocaleController.getString(R.string.Copy)));
         }
+    }
+
+    private boolean isCurrentMusic(String key) {
+        return Objects.equals(key, LyricsController.getInstance().getKey(MediaController.getInstance().getPlayingMessageObject().getMusicTitle(), MediaController.getInstance().getPlayingMessageObject().getMusicAuthor(), MediaController.getInstance().getDuration()));
     }
 
     public int getCurrentLineIndex() {

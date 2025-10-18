@@ -12,6 +12,7 @@ import com.pessdes.lyrics.ui.LyricsActivity;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.BaseFragment;
 
@@ -30,6 +31,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LyricsController {
+    public static final int searchingProvider = 67676767;
+    public static final int exceptionWhileSearching = 67676768;
+
     private static final LyricsController instance = new LyricsController();
 
     private final Map<String, CompletableFuture<Lyrics>> lyricsFutures = new ConcurrentHashMap<>();
@@ -71,7 +75,7 @@ public class LyricsController {
         return result;
     }
 
-    private String getCacheKey(String trackName, String artistName, double trackDuration) {
+    public String getKey(String trackName, String artistName, double trackDuration) {
         return trackName + "|" + artistName + "|" + trackDuration;
     }
 
@@ -102,13 +106,15 @@ public class LyricsController {
             providers.sort(Comparator.comparingInt(IProvider::getPriority));
 
             for (var provider : providers) {
+                NotificationCenter.getGlobalInstance().postNotificationName(searchingProvider, provider, getKey(trackName, artistName, trackDuration));
                 Lyrics result = provider.seachLyrics(trackName, artistName, trackDuration);
                 if (result != null) {
                     return result;
                 }
             }
-        } catch (Exception ex) {
-            log("Exception in getLyricsInternal: " + ex.getMessage());
+        } catch (Exception e) {
+            log("Exception in getLyricsInternal: " + e.getMessage());
+            NotificationCenter.getGlobalInstance().postNotificationName(exceptionWhileSearching, e, getKey(trackName, artistName, trackDuration));
         }
 
         return null;
@@ -116,7 +122,7 @@ public class LyricsController {
 
     @Nullable
     public Lyrics getLyrics(@NotNull String trackName, String artistName, double trackDuration) {
-        String key = getCacheKey(trackName, artistName, trackDuration);
+        String key = getKey(trackName, artistName, trackDuration);
 
         CompletableFuture<Lyrics> future = lyricsFutures.computeIfAbsent(key, k -> CompletableFuture.supplyAsync(() ->
                 getLyricsInternal(trackName, artistName, trackDuration), networkExecutor));
@@ -127,6 +133,7 @@ public class LyricsController {
             return result;
         } catch (Exception e) {
             log("Exception while waiting for lyrics future: " + e.getMessage());
+            NotificationCenter.getGlobalInstance().postNotificationName(exceptionWhileSearching, e, key);
             lyricsFutures.remove(key, future);
             return null;
         }
