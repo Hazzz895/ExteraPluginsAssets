@@ -119,9 +119,11 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             FrameLayout layout = (FrameLayout) fragmentView;
             layout.setBackgroundColor(bgColor);
 
-            log("statusstickerview");
+            log("statusstickerview!!!!!!");
             statusStickerView = new StickerEmptyView(context, null, StickerEmptyView.STICKER_TYPE_SEARCH, resourceProvider);
+            log("created!");
             statusStickerView.setVisibility(View.GONE, false);
+            log("visibility = gone");
             layout.addView(statusStickerView);
 
             log("creating viewpager");
