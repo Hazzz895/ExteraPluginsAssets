@@ -3,11 +3,6 @@ package com.pessdes.lyrics;
 import android.graphics.Color;
 
 import org.jetbrains.annotations.Nullable;
-import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.NotificationCenter;
-import org.telegram.messenger.Utilities;
-
-import java.lang.reflect.Field;
 
 public class Util {
     public static String trimStringWithEllipsis(@Nullable String str, int maxLength) {
@@ -46,32 +41,4 @@ public class Util {
         return applyAlpha(color, alpha, false);
     }
 
-    public static Object getPrivateField(Object target, String fieldName) {
-        try {
-            Class<?> clazz = target.getClass();
-            Field field = null;
-
-            while (clazz != null) {
-                try {
-                    field = clazz.getDeclaredField(fieldName);
-                    break;
-                } catch (NoSuchFieldException e) {
-                    clazz = clazz.getSuperclass();
-                }
-            }
-
-            if (field == null) {
-                throw new NoSuchFieldException("Field '" + fieldName + "' not found");
-            }
-
-            field.setAccessible(true);
-            return field.get(target);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get field '" + fieldName + "'", e);
-        }
-    }
-
-    public static void post(int id, Object... args) {
-        AndroidUtilities.runOnUIThread(() -> NotificationCenter.getGlobalInstance().postNotificationName(id, args));
-    }
 }

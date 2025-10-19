@@ -136,6 +136,8 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         plainLyricsScroller.addView(plainLyricsView);
 
         layout.setForeground(getLayerDrawable(bgColor));
+
+        configureNotifications(true);
         onMusicLoad();
 
         return fragmentView;
@@ -166,13 +168,16 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void onMusicLoad() {
-        boolean loaded = MediaController.getInstance().getPlayingMessageObject() != null;
+        boolean loaded = MediaController.getInstance().getPlayingMessageObject() != null && fragmentView != null;
         String title = null;
         String subTitle = null;
 
         if (!loaded) {
             title = LocaleController.getString(R.string.Loading);
         } else {
+            if (lyricsScroller != null && lyricsScroller.getAdapter() != null) {
+                lyricsScroller.getAdapter().notifyItemChanged(0);
+            }
             MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
             boolean isNew = currentMessageObject != messageObject;
             currentMessageObject = messageObject;
@@ -286,27 +291,9 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     @Override
-    public boolean onFragmentCreate() {
-        configureNotifications(true);
-        return super.onFragmentCreate();
-    }
-
-    @Override
     public void onFragmentDestroy() {
         configureNotifications(false);
         super.onFragmentDestroy();
-    }
-
-    private void onMusicPause() {
-        if (lyricsScroller.getAdapter() != null) {
-            lyricsScroller.getAdapter().notifyItemChanged(0);
-        }
-    }
-
-    private void onMusicPlay() {
-        if (lyricsScroller.getAdapter() != null) {
-            lyricsScroller.getAdapter().notifyItemChanged(0);
-        }
     }
 
     private void onMusicProgressChanged(boolean animated) {
@@ -363,25 +350,16 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     }
 
     private void onMusicStateChanged() {
-        if (MediaController.getInstance().isMessagePaused()) {
-            onMusicPause();
-        } else {
-            onMusicPlay();
-        }
     }
 
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
+        if (fragmentView == null) {
+            return;
+        }
         if (id == NotificationCenter.messagePlayingDidStart || id == NotificationCenter.messagePlayingPlayStateChanged || id == NotificationCenter.messagePlayingDidReset) {
             onMusicLoad();
-            if (id == NotificationCenter.messagePlayingPlayStateChanged) {
-                onMusicStateChanged();
-            } else {
-                onMusicPlay();
-            }
-        } else if (id == NotificationCenter.messagePlayingDidSeek) {
-            onMusicProgressChanged(true);
-        } else if (id == NotificationCenter.messagePlayingProgressDidChanged) {
+        } else if (id == NotificationCenter.messagePlayingDidSeek || id == NotificationCenter.messagePlayingProgressDidChanged) {
             onMusicProgressChanged(true);
         }
     }
