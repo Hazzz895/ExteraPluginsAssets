@@ -292,9 +292,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         else if (type == STICKER_TYPE_EXCEPTION) {
             setCustomStickerToStatus("⛔️");
         }
-        else {
-            statusStickerView.setStickerType(type);
-        }
     }
     private void setCustomStickerToStatus(String imageFilter, TLRPC.Document document, TLRPC.TL_messages_stickerSet set) {
         if (!LiteMode.isEnabled(LiteMode.FLAGS_ANIMATED_STICKERS)) {
@@ -312,7 +309,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             statusStickerView.stickerView.getImageReceiver().setAutoRepeat(2);
         } else {
             if (set != null) {
-                MediaDataController.getInstance(currentAccount).loadStickersByEmojiOrName(set.set.short_name, false, false);
+                MediaDataController.getInstance(currentAccount).loadStickersByEmojiOrName(set.set.short_name, false, set == null);
             }
             statusStickerView.stickerView.getImageReceiver().clearImage();
         }
@@ -467,7 +464,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
         } else if (id == LyricsController.searchingProvider) {
             IProvider provider = (IProvider) args[0];
             String key = (String) args[1];
-            log(isCurrentMusic(key));
             if (provider == null || !isCurrentMusic(key) || provider.getName() == null) {
                 return;
             }
