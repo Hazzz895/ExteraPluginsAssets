@@ -121,7 +121,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
             log("statusstickerview!!!!!!");
             statusStickerView = new StickerEmptyView(context, null, StickerEmptyView.STICKER_TYPE_SEARCH, resourceProvider);
-            log("created!");
+            log("created!----gone---BELOWWWW");
             statusStickerView.setVisibility(View.GONE);
             log("visibility = gone");
             layout.addView(statusStickerView);
