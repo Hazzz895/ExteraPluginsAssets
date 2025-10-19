@@ -3,6 +3,9 @@ package com.pessdes.lyrics;
 import android.graphics.Color;
 
 import org.jetbrains.annotations.Nullable;
+import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.NotificationCenter;
+import org.telegram.messenger.Utilities;
 
 import java.lang.reflect.Field;
 
@@ -66,5 +69,9 @@ public class Util {
         } catch (Exception e) {
             throw new RuntimeException("Failed to get field '" + fieldName + "'", e);
         }
+    }
+
+    public static void post(int id, Object... args) {
+        AndroidUtilities.runOnUIThread(() -> NotificationCenter.getGlobalInstance().postNotificationName(id, args));
     }
 }
