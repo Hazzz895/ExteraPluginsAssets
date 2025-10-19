@@ -78,69 +78,76 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @Override
     public View createView(Context context) {
-        actionBar.setBackButtonImage(R.drawable.ic_close_white);
-        actionBar.setAllowOverlayTitle(true);
-        actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
-            @Override
-            public void onItemClick(int id) {
-                if (id == -1) {
-                    finishFragment();
+        log("creating view");
+        try {
+            actionBar.setBackButtonImage(R.drawable.ic_close_white);
+            actionBar.setAllowOverlayTitle(true);
+            actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
+                @Override
+                public void onItemClick(int id) {
+                    if (id == -1) {
+                        finishFragment();
+                    } else if (id == SWAP_BUTTON_ID) {
+                        var currentItem = viewPager.getCurrentItem();
+                        var pageCount = 1;
+
+                        if (viewPager.getAdapter() != null) {
+                            pageCount = viewPager.getAdapter().getCount();
+                        }
+
+                        if (pageCount == 1) {
+                            AndroidUtilities.shakeView(getFragmentView());
+                        } else {
+                            var newItem = currentItem == pageCount - 1 ? 0 : currentItem + 1;
+                            viewPager.setCurrentItem(newItem, true);
+                        }
+                    }
                 }
-                else if (id == SWAP_BUTTON_ID) {
-                    var currentItem = viewPager.getCurrentItem();
-                    var pageCount = 1;
+            });
+            var menu = actionBar.createMenu();
+            swapButton = menu.addItem(SWAP_BUTTON_ID, R.drawable.msg_photo_text_framed3);
+            swapButton.setVisibility(View.GONE);
 
-                    if (viewPager.getAdapter() != null) {
-                        pageCount = viewPager.getAdapter().getCount();
-                    }
+            final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
 
-                    if (pageCount == 1) {
-                        AndroidUtilities.shakeView(getFragmentView());
-                    }
-                    else {
-                        var newItem = currentItem == pageCount - 1 ? 0 : currentItem + 1;
-                        viewPager.setCurrentItem(newItem, true);
-                    }
-                }
-            }
-        });
-        var menu = actionBar.createMenu();
-        swapButton = menu.addItem(SWAP_BUTTON_ID, R.drawable.msg_photo_text_framed3);
-        swapButton.setVisibility(View.GONE);
+            fragmentView = new FrameLayout(context);
+            FrameLayout layout = (FrameLayout) fragmentView;
+            layout.setBackgroundColor(bgColor);
 
-        final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
+            statusStickerView = new StickerEmptyView(context, null, StickerEmptyView.STICKER_TYPE_SEARCH, resourceProvider);
+            statusStickerView.setVisibility(View.GONE, false);
+            layout.addView(statusStickerView);
 
-        fragmentView = new FrameLayout(context);
-        FrameLayout layout = (FrameLayout) fragmentView;
-        layout.setBackgroundColor(bgColor);
+            log("creating viewpager");
+            viewPager = new ViewPager(context);
+            pagerAdapter = new LyricsPagerAdapter();
+            viewPager.setAdapter(pagerAdapter);
+            layout.addView(viewPager, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
-        statusStickerView = new StickerEmptyView(context, null, StickerEmptyView.STICKER_TYPE_SEARCH, resourceProvider);
-        statusStickerView.setVisibility(View.GONE, false);
-        layout.addView(statusStickerView);
+            log("creating lyrciscrolelr");
+            lyricsScroller = new LyricsScroller(context, this);
+            lyricsScrollerLayout = new FrameLayout(context);
+            lyricsScrollerLayout.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
+            lyricsScrollerLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
-        viewPager = new ViewPager(context);
-        pagerAdapter = new LyricsPagerAdapter();
-        viewPager.setAdapter(pagerAdapter);
-        layout.addView(viewPager, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+            plainLyricsScroller = new ScrollView(context);
+            plainLyricsScroller.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(32), AndroidUtilities.dp(16), AndroidUtilities.dp(32));
+            plainLyricsScroller.setClipToPadding(false);
+            plainLyricsView = new PlainLyricsCell(context);
+            plainLyricsView.setTextIsSelectable(true);
+            plainLyricsScroller.addView(plainLyricsView);
 
-        lyricsScroller = new LyricsScroller(context, this);
-        lyricsScrollerLayout = new FrameLayout(context);
-        lyricsScrollerLayout.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
-        lyricsScrollerLayout.addView(lyricsScroller, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+            layout.setForeground(getLayerDrawable(bgColor));
 
-        plainLyricsScroller = new ScrollView(context);
-        plainLyricsScroller.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(32), AndroidUtilities.dp(16), AndroidUtilities.dp(32));
-        plainLyricsScroller.setClipToPadding(false);
-        plainLyricsView = new PlainLyricsCell(context);
-        plainLyricsView.setTextIsSelectable(true);
-        plainLyricsScroller.addView(plainLyricsView);
+            configureNotifications(true);
+            log("onmusicload");
+            onMusicLoad();
 
-        layout.setForeground(getLayerDrawable(bgColor));
-
-        configureNotifications(true);
-        onMusicLoad();
-
-        return fragmentView;
+            return fragmentView;
+        } catch (Exception e) {
+            log("Error while creating view: " + e);
+            throw e;
+        }
     }
 
     private static LayerDrawable getLayerDrawable(int bgColor) {
