@@ -78,10 +78,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @Override
     public View createView(Context context) {
-        log("creatinjjjjg view");
-        log("try below");
         try {
-            log("tringg");
             actionBar.setBackButtonImage(R.drawable.ic_close_white);
             actionBar.setAllowOverlayTitle(true);
             actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
@@ -106,33 +103,25 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     }
                 }
             });
-            log("menu");
             var menu = actionBar.createMenu();
             swapButton = menu.addItem(SWAP_BUTTON_ID, R.drawable.msg_photo_text_framed3);
             swapButton.setVisibility(View.GONE);
 
-            log("bgcolor");
             final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
 
-            log("frgrgment view");
             fragmentView = new FrameLayout(context);
             FrameLayout layout = (FrameLayout) fragmentView;
             layout.setBackgroundColor(bgColor);
 
-            log("statusstickerview!!!!!!");
             statusStickerView = new StickerEmptyView(context, null, StickerEmptyView.STICKER_TYPE_SEARCH, resourceProvider);
-            log("created!----gone---BELOWWWW");
             statusStickerView.setVisibility(View.GONE);
-            log("visibility = gone");
             layout.addView(statusStickerView);
 
-            log("creating viewpager");
             viewPager = new ViewPager(context);
             pagerAdapter = new LyricsPagerAdapter();
             viewPager.setAdapter(pagerAdapter);
             layout.addView(viewPager, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
-            log("creating lyrciscrolelr");
             lyricsScroller = new LyricsScroller(context, this);
             lyricsScrollerLayout = new FrameLayout(context);
             lyricsScrollerLayout.setPadding(AndroidUtilities.dp(16), 0, AndroidUtilities.dp(16), 0);
@@ -148,7 +137,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             layout.setForeground(getLayerDrawable(bgColor));
 
             configureNotifications(true);
-            log("onmusicload");
             onMusicLoad();
 
             return fragmentView;
@@ -362,9 +350,6 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
             }
         }
         return currentLine;
-    }
-
-    private void onMusicStateChanged() {
     }
 
     @Override

@@ -141,10 +141,8 @@ public class LyricsController {
     }
 
     public LyricsActivity presentLyricsActivity(BaseFragment baseFragment) {
-        log("presenting...");
         var activity = new LyricsActivity();
         baseFragment.presentFragment(activity);
-        log("sysccesfule presented");
         return activity;
     }
 
