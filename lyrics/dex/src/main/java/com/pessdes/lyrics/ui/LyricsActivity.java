@@ -80,6 +80,7 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
     public View createView(Context context) {
         log("creating view");
         try {
+            log("try");
             actionBar.setBackButtonImage(R.drawable.ic_close_white);
             actionBar.setAllowOverlayTitle(true);
             actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
@@ -104,16 +105,20 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
                     }
                 }
             });
+            log("menu");
             var menu = actionBar.createMenu();
             swapButton = menu.addItem(SWAP_BUTTON_ID, R.drawable.msg_photo_text_framed3);
             swapButton.setVisibility(View.GONE);
 
+            log("bgcolor");
             final int bgColor = Theme.getColor(Theme.key_windowBackgroundWhite);
 
+            log("frgrgment view");
             fragmentView = new FrameLayout(context);
             FrameLayout layout = (FrameLayout) fragmentView;
             layout.setBackgroundColor(bgColor);
 
+            log("statusstickerview");
             statusStickerView = new StickerEmptyView(context, null, StickerEmptyView.STICKER_TYPE_SEARCH, resourceProvider);
             statusStickerView.setVisibility(View.GONE, false);
             layout.addView(statusStickerView);
