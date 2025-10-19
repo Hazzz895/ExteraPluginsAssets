@@ -78,9 +78,10 @@ public class LyricsActivity extends BaseFragment implements NotificationCenter.N
 
     @Override
     public View createView(Context context) {
-        log("creating view");
+        log("creatinjjjjg view");
+        log("try below");
         try {
-            log("try");
+            log("tringg");
             actionBar.setBackButtonImage(R.drawable.ic_close_white);
             actionBar.setAllowOverlayTitle(true);
             actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
