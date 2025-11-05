@@ -26,6 +26,7 @@ import org.telegram.ui.Components.RecyclerListView;
 import java.util.List;
 
 public class LyricsScroller extends RecyclerListView {
+    private int itemHeight = 0;
     private final LyricsActivity lyricsActivity;
     public static final int shift = 1;
 
@@ -52,12 +53,30 @@ public class LyricsScroller extends RecyclerListView {
         super.onMeasure(widthSpec, heightSpec);
         int h = getMeasuredHeight();
         if (h > 0) {
-                int verticalPadding = h / 4;
+            if (itemHeight == 0 && getAdapter() != null && getAdapter().getItemCount() > 0) {
+                LyricsAdapter adapter = (LyricsAdapter) getAdapter();
+                if (adapter == null) return;
+
+                RecyclerView.ViewHolder holder = adapter.createViewHolder(this, adapter.TYPE_TEXT);
+                adapter.onBindViewHolder(holder, 1);
+                View itemView = holder.itemView;
+
+                itemView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+                int heightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+                itemView.measure(widthSpec, heightMeasureSpec);
+
+                itemHeight = itemView.getMeasuredHeight();
+            }
+            if (itemHeight > 0) {
+                int verticalPadding = h / 2 - itemHeight / 2;
                 if (getPaddingTop() != verticalPadding) {
                     setPadding(0, verticalPadding, 0, verticalPadding);
                 }
             }
         }
+    }
+
     private Lyrics lyrics;
 
     public void setLyrics(Lyrics lyrics) {
