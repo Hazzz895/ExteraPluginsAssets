@@ -52,7 +52,7 @@ public class LyricsScroller extends RecyclerListView {
         super.onMeasure(widthSpec, heightSpec);
         int h = getMeasuredHeight();
         if (h > 0) {
-                int verticalPadding = h / 2 - AndroidUtilities.dp(48);
+                int verticalPadding = h / 4;
                 if (getPaddingTop() != verticalPadding) {
                     setPadding(0, verticalPadding, 0, verticalPadding);
                 }
