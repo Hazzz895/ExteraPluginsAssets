@@ -206,9 +206,12 @@ public class ExportedChatActivity extends BaseFragment {
 
         actionBar.setAllowOverlayTitle(true);
         actionBar.setAddToContainer(false);
+        actionBar.setOccupyStatusBar(!AndroidUtilities.isTablet());
 
-        avatarContainer = new ChatAvatarContainer(context, null, false, getResourceProvider());
+        avatarContainer = new ChatAvatarContainer(context, null, false);
         avatarContainer.setTitle(name);
+        avatarContainer.setEnabled(true);
+        avatarContainer.setOccupyStatusBar(!AndroidUtilities.isTablet());
         avatarContainer.setSubtitle(LocaleController.formatPluralString("messages", exported.messages.size()));
         if (exported.peer instanceof TLRPC.Chat) avatarContainer.setChatAvatar((TLRPC.Chat) exported.peer);
         else if (exported.peer instanceof TLRPC.User) avatarContainer.setUserAvatar((TLRPC.User) exported.peer);
@@ -227,7 +230,6 @@ public class ExportedChatActivity extends BaseFragment {
                 if (child instanceof ChatMessageCell) {
                     ChatMessageCell chatMessageCell = (ChatMessageCell) child;
                     ImageReceiver imageReceiver = chatMessageCell.getAvatarImage();
-                    log("imagereciever is null: " + (imageReceiver == null) + " need draw avatar: " + chatMessageCell.needDrawAvatar());
                     if (imageReceiver != null) {
                         boolean updateVisibility = !chatMessageCell.getMessageObject().deleted && chatListView.getChildAdapterPosition(chatMessageCell) != RecyclerView.NO_POSITION;
                         if (chatMessageCell.getMessageObject().deleted) {
@@ -754,14 +756,14 @@ public class ExportedChatActivity extends BaseFragment {
 
                 if (exported.peer instanceof TLRPC.Chat) {
                     if (position > 0) {
-                        MessageObject prevMessage = createMessageObject(exported.messages.get(position - 1));
+                        MessageObject prevMessage = messageObjects.get(position - 1);
                         if (prevMessage.isOutOwner() == msg.isOutOwner() && Math.abs(prevMessage.messageOwner.date - msg.messageOwner.date) <= 300 && prevMessage.getFromChatId() == msg.getFromChatId()) {
                             pinnedTop = true;
                             firstInChat = false;
                         }
                     }
                     if (position < rowCount - 1) {
-                        MessageObject nextMessage = createMessageObject(exported.messages.get(position + 1));
+                        MessageObject nextMessage = messageObjects.get(position + 1);
                         if (nextMessage.isOutOwner() == msg.isOutOwner() && Math.abs(nextMessage.messageOwner.date - msg.messageOwner.date) <= 300 && nextMessage.getFromChatId() == msg.getFromChatId()) {
                             pinnedBottom = true;
                         }
@@ -791,7 +793,6 @@ public class ExportedChatActivity extends BaseFragment {
                     }
                 }
                 msg.forceAvatar = !msg.isOutOwner() && (msg.isFromUser() || msg.isFromGroup());
-                log("forceavatr " + msg.forceAvatar);
                 messageCell.setMessageObject(msg, groupedMessages, pinnedBottom, pinnedTop, firstInChat);
                 messageCell.setId(position);
             }
@@ -810,7 +811,16 @@ public class ExportedChatActivity extends BaseFragment {
         }
 
         private MessageObject createMessageObject(TLRPC.Message message) {
-            var messageObject = new MessageObject(getCurrentAccount(), message, false, true);
+            MessageObject replyTo = null;
+            if (message.reply_to != null) {
+                for (int i = 0; i < messageObjects.size(); i++) {
+                    var msg = messageObjects.get(i);
+                    if (msg.getId() == message.reply_to.reply_to_msg_id) {
+                        replyTo = msg;
+                    }
+                }
+            }
+            var messageObject = new MessageObject(getCurrentAccount(), message, replyTo, false, false);
             messageObjects.add(messageObject);
             return messageObject;
         }
