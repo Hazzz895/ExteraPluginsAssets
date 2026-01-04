@@ -74,6 +74,7 @@ import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.LocationActivity;
 import org.telegram.ui.PhotoViewer;
+import org.telegram.ui.PinchToZoomHelper;
 import org.telegram.ui.ProfileActivity;
 import org.telegram.ui.ThemePreviewActivity;
 
@@ -455,7 +456,12 @@ public class ExportedChatActivity extends BaseFragment {
             View view;
             if (viewType == MESSAGE_TYPE_MESSAGE) {
                 var cell = new ChatMessageCell(context, getCurrentAccount(), false, sharedResources, getResourceProvider());
-                cell.setDelegate(new ChatMessageCell.ChatMessageCellDelegate() {
+                /*cell.setDelegate(new ChatMessageCell.ChatMessageCellDelegate() {
+                    @Override
+                    public PinchToZoomHelper getPinchToZoomHelper() {
+                        return null;
+                    }
+
                     @Override
                     public TextSelectionHelper.ChatListTextSelectionHelper getTextSelectionHelper() {
                         return null;
@@ -722,7 +728,7 @@ public class ExportedChatActivity extends BaseFragment {
                             } catch (Exception ignored) {}
                         }
                     }
-                });
+                });*/
                 view = cell;
             } else if (viewType == MESSAGE_TYPE_SERVICE) {
                 view = new ChatActionCell(context, false, getResourceProvider());
