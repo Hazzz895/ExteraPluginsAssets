@@ -95,7 +95,6 @@ public class ExportedChatActivity extends BaseFragment {
     private ChatMessageCell dummyMessageCell;
     private final LongSparseArray<MessageObject.GroupedMessages> groupedMessagesMap = new LongSparseArray<>();
     private RecyclerAnimationScrollHelper chatScrollHelper;
-    private TextSelectionHelper.ChatListTextSelectionHelper textSelectionHelper;
 
     public ExportedChatActivity(@NonNull exported_Chat exported) {
         this.exported = exported;
@@ -188,7 +187,6 @@ public class ExportedChatActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
-        textSelectionHelper = new TextSelectionHelper.ChatListTextSelectionHelper();
         sharedResources = new ChatMessageSharedResources(context);
         var name = getChatName();
 
@@ -460,18 +458,11 @@ public class ExportedChatActivity extends BaseFragment {
                 cell.setDelegate(new ChatMessageCell.ChatMessageCellDelegate() {
                     @Override
                     public TextSelectionHelper.ChatListTextSelectionHelper getTextSelectionHelper() {
-                        return textSelectionHelper;
+                        return null;
                     }
 
                     @Override
                     public boolean shouldShowTopicButton(ChatMessageCell cell) {
-                        MessageObject message = cell.getMessageObject();
-                        if (message == null || message.currentEvent == null || !(
-                                message.currentEvent.action instanceof TLRPC.TL_channelAdminLogEventActionEditMessage ||
-                                        message.currentEvent.action instanceof TLRPC.TL_channelAdminLogEventActionDeleteMessage
-                        )) {
-                            return false;
-                        }
                         return !(exported.peer instanceof TLRPC.Chat) || ChatObject.isForum((TLRPC.Chat)exported.peer);
                     }
 
