@@ -1,5 +1,6 @@
 package com.pessdes.chatexporter.ui;
 
+import static com.pessdes.chatexporter.Util.log;
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
@@ -226,6 +227,7 @@ public class ExportedChatActivity extends BaseFragment {
                 if (child instanceof ChatMessageCell) {
                     ChatMessageCell chatMessageCell = (ChatMessageCell) child;
                     ImageReceiver imageReceiver = chatMessageCell.getAvatarImage();
+                    log("imagereciever is null: " + (imageReceiver == null) + " need draw avatar: " + chatMessageCell.needDrawAvatar());
                     if (imageReceiver != null) {
                         boolean updateVisibility = !chatMessageCell.getMessageObject().deleted && chatListView.getChildAdapterPosition(chatMessageCell) != RecyclerView.NO_POSITION;
                         if (chatMessageCell.getMessageObject().deleted) {
@@ -789,6 +791,7 @@ public class ExportedChatActivity extends BaseFragment {
                     }
                 }
                 messageCell.setMessageObject(msg, groupedMessages, pinnedBottom, pinnedTop, firstInChat);
+                messageCell.isAvatarVisible = messageCell.needDrawAvatar();
                 messageCell.setId(position);
             }
             else if (holder.getItemViewType() == MESSAGE_TYPE_SERVICE) {

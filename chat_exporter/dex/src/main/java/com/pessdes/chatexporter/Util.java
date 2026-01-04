@@ -5,6 +5,9 @@ import org.telegram.tgnet.InputSerializedData;
 import org.telegram.tgnet.OutputSerializedData;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.Vector;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 public class Util {
     public static ArrayList<TLRPC.Message> deserializeMessages(InputSerializedData stream, boolean exception) {
@@ -57,5 +60,32 @@ public class Util {
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Method logMethod = null;
+
+    static  {
+        try {
+            var appUtils = Class.forName("com.exteragram.messenger.utils.AppUtils");
+            logMethod = appUtils.getDeclaredMethod("log", String.class);
+        } catch (NoSuchMethodException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void logInternal(String message) {
+        try {
+            logMethod.invoke(null, message);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void log(String message) {
+        logInternal(String.format("[%s:dex] %s", "chat_exporter", message));
+    }
+
+    public static void log(Object object) {
+        log(object.toString());
     }
 }
