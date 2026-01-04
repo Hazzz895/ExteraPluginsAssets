@@ -1,25 +1,26 @@
-/*
- * Some of the code was copied from https://github.com/AyuGram/AyuGram4A/blob/rewrite/TMessagesProj/src/main/java/com/radolyn/ayugram/ui/AyuMessageHistory.java
- * */
-
 package com.pessdes.chatexporter.ui;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
+import androidx.collection.LongSparseArray;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pessdes.chatexporter.tgnet.exported_Chat;
 
+import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatMessageSharedResources;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.ChatActionCell;
 import org.telegram.ui.Cells.ChatMessageCell;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
@@ -32,6 +33,7 @@ public class ExportedChatActivity extends BaseFragment {
     private exported_Chat exported;
     private ChatMessageSharedResources sharedResources;
 
+    private final LongSparseArray<MessageObject.GroupedMessages> groupedMessagesMap = new LongSparseArray<>();
     public ExportedChatActivity(@NonNull exported_Chat exported) {
         this.exported = exported;
         rowCount = exported.messages.size();
@@ -43,7 +45,7 @@ public class ExportedChatActivity extends BaseFragment {
         var chat = exported.peer;
         String name;
         if (chat == null) {
-            name = "?"; // wtf
+            name = "?";
         } else if (chat instanceof TLRPC.User) {
             name = ((TLRPC.User) chat).first_name;
         } else if (chat instanceof TLRPC.Chat) {
@@ -54,7 +56,7 @@ public class ExportedChatActivity extends BaseFragment {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle(name);
-        actionBar.setSubtitle(exported.messages.size() + " сообщений");
+        actionBar.setSubtitle(LocaleController.formatPluralString("messages", exported.messages.size()));
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
             @Override
             public void onItemClick(int id) {
@@ -87,7 +89,9 @@ public class ExportedChatActivity extends BaseFragment {
     }
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {
-
+        public static final int MESSAGE_TYPE_UNKNOWN = 0;
+        public static final int MESSAGE_TYPE_MESSAGE = 1;
+        public static final int MESSAGE_TYPE_SERVICE = 2;
         private final Context context;
 
         public ListAdapter(Context context) {
@@ -107,9 +111,10 @@ public class ExportedChatActivity extends BaseFragment {
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view;
-            if (viewType == 1) {
-                boolean isChat = exported.peer instanceof TLRPC.Chat;
-                view = new ChatMessageCell(context, getCurrentAccount(), isChat, sharedResources, getResourceProvider());
+            if (viewType == MESSAGE_TYPE_MESSAGE) {
+                view = new ChatMessageCell(context, getCurrentAccount(), false, sharedResources, getResourceProvider());
+            } else if (viewType == MESSAGE_TYPE_SERVICE) {
+                view = new ChatActionCell(context, false, getResourceProvider());
             } else {
                 view = null;
             }
@@ -118,11 +123,11 @@ public class ExportedChatActivity extends BaseFragment {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            if (holder.getItemViewType() == 1) {
-                ChatMessageCell messageCell = (ChatMessageCell) holder.itemView;
+            var tl_message = exported.messages.get(position);
+            var msg = createMessageObject(tl_message);
 
-                var tl_message = exported.messages.get(position);
-                var msg = createMessageObject(tl_message);
+            if (holder.getItemViewType() == MESSAGE_TYPE_MESSAGE) {
+                ChatMessageCell messageCell = (ChatMessageCell) holder.itemView;
 
                 boolean pinnedTop = false;
                 boolean pinnedBottom = false;
@@ -144,14 +149,43 @@ public class ExportedChatActivity extends BaseFragment {
                     }
                 }
 
-                messageCell.setMessageObject(msg, null, pinnedBottom, pinnedTop, firstInChat);
+                MessageObject.GroupedMessages groupedMessages = null;
+                if (msg.hasValidGroupId()) {
+                    groupedMessages = groupedMessagesMap.get(msg.getGroupIdForUse());
+                    if (groupedMessages == null) {
+                        groupedMessages = new MessageObject.GroupedMessages();
+                        groupedMessages.reversed = false;
+                        groupedMessages.groupId = msg.getGroupId();
+                        groupedMessagesMap.put(groupedMessages.groupId, groupedMessages);
+                    }
+                    if (groupedMessages.getPosition(msg) == null) {
+                        boolean found = false;
+                        for (int j = 0; j < groupedMessages.messages.size(); ++j) {
+                            if (groupedMessages.messages.get(j).getId() == msg.getId()) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            groupedMessages.messages.add(msg);
+                        }
+                    }
+                }
+                messageCell.setMessageObject(msg, groupedMessages, pinnedBottom, pinnedTop, firstInChat);
                 messageCell.setId(position);
+            }
+            else if (holder.getItemViewType() == MESSAGE_TYPE_SERVICE) {
+                ChatActionCell actionCell = (ChatActionCell) holder.itemView;
+                actionCell.setMessageObject(msg);
+                actionCell.setId(position);
             }
         }
 
         @Override
         public int getItemViewType(int position) {
-            return position >= 0 && position < exported.messages.size() ? 1 : 0;
+            if (!(position >= 0 && position < exported.messages.size())) return MESSAGE_TYPE_UNKNOWN;
+            else if (exported.messages.get(position) instanceof TLRPC.TL_messageService) return MESSAGE_TYPE_SERVICE;
+            else return MESSAGE_TYPE_MESSAGE;
         }
 
         private MessageObject createMessageObject(TLRPC.Message message) {

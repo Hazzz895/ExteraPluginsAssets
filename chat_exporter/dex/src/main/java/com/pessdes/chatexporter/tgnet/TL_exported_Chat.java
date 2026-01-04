@@ -15,6 +15,7 @@ public class TL_exported_Chat extends exported_Chat {
     public void readParams(InputSerializedData stream, boolean exception) {
         messages = Util.deserializeMessages(stream, exception);
         readPeer(stream, exception);
+        date = stream.readInt64(exception);
     }
 
     @Override
@@ -22,6 +23,7 @@ public class TL_exported_Chat extends exported_Chat {
         stream.writeInt32(constructor);
         Vector.serialize(stream, messages);
         peer.serializeToStream(stream);
+        stream.writeInt64(date);
     }
 
 }

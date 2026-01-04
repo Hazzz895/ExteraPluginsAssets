@@ -1,14 +1,17 @@
 package com.pessdes.chatexporter.tgnet;
 
+
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.InputSerializedData;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public abstract class exported_Chat extends TLObject {
     public ArrayList<TLRPC.Message> messages = new ArrayList<>();
     public TLObject peer;
+    public long date;
 
     public static exported_Chat TLdeserialize(InputSerializedData stream, int constructor, boolean exception) {
         exported_Chat result = null;
