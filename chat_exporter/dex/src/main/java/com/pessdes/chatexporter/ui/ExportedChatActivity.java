@@ -93,9 +93,9 @@ public class ExportedChatActivity extends BaseFragment {
     private ListAdapter adapter;
     private ArrayList<MessageObject> messageObjects = new ArrayList<>();
     private ChatMessageCell dummyMessageCell;
-
     private final LongSparseArray<MessageObject.GroupedMessages> groupedMessagesMap = new LongSparseArray<>();
     private RecyclerAnimationScrollHelper chatScrollHelper;
+    private TextSelectionHelper.ChatListTextSelectionHelper textSelectionHelper;
 
     public ExportedChatActivity(@NonNull exported_Chat exported) {
         this.exported = exported;
@@ -188,6 +188,7 @@ public class ExportedChatActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
+        textSelectionHelper = new TextSelectionHelper.ChatListTextSelectionHelper();
         sharedResources = new ChatMessageSharedResources(context);
         var name = getChatName();
 
@@ -459,7 +460,7 @@ public class ExportedChatActivity extends BaseFragment {
                 cell.setDelegate(new ChatMessageCell.ChatMessageCellDelegate() {
                     @Override
                     public TextSelectionHelper.ChatListTextSelectionHelper getTextSelectionHelper() {
-                        return ChatMessageCell.ChatMessageCellDelegate.super.getTextSelectionHelper();
+                        return textSelectionHelper;
                     }
 
                     @Override
