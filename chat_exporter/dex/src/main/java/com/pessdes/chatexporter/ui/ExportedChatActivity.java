@@ -26,7 +26,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.collection.LongSparseArray;
 import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.ChatListItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -52,6 +51,7 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.AvatarPreviewer;
 import org.telegram.ui.Cells.ChatActionCell;
 import org.telegram.ui.Cells.ChatMessageCell;
+import org.telegram.ui.Cells.TextSelectionHelper;
 import org.telegram.ui.ChannelAdminLogActivity;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.AlertsCreator;
@@ -340,7 +340,7 @@ public class ExportedChatActivity extends BaseFragment {
                 return result;
             }
         };
-        
+
         chatListView.setLayoutAnimation(null);
         chatScrollHelper = new RecyclerAnimationScrollHelper(chatListView, manager);
         chatListView.setLayoutManager(manager = new LinearLayoutManager(context) {
@@ -457,6 +457,11 @@ public class ExportedChatActivity extends BaseFragment {
             if (viewType == MESSAGE_TYPE_MESSAGE) {
                 var cell = new ChatMessageCell(context, getCurrentAccount(), false, sharedResources, getResourceProvider());
                 cell.setDelegate(new ChatMessageCell.ChatMessageCellDelegate() {
+                    @Override
+                    public TextSelectionHelper.ChatListTextSelectionHelper getTextSelectionHelper() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.getTextSelectionHelper();
+                    }
+
                     @Override
                     public boolean shouldShowTopicButton(ChatMessageCell cell) {
                         MessageObject message = cell.getMessageObject();
