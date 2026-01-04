@@ -340,10 +340,7 @@ public class ExportedChatActivity extends BaseFragment {
                 return result;
             }
         };
-
-        var animator = new ChatListItemAnimator(null, chatListView, resourceProvider);
-        animator.setReversePositions(true);
-        chatListView.setItemAnimator(animator);
+        
         chatListView.setLayoutAnimation(null);
         chatScrollHelper = new RecyclerAnimationScrollHelper(chatListView, manager);
         chatListView.setLayoutManager(manager = new LinearLayoutManager(context) {
