@@ -790,8 +790,9 @@ public class ExportedChatActivity extends BaseFragment {
                         }
                     }
                 }
+                msg.forceAvatar = !msg.isOutOwner() && (msg.isFromUser() || msg.isFromGroup());
+                log("forceavatr " + msg.forceAvatar);
                 messageCell.setMessageObject(msg, groupedMessages, pinnedBottom, pinnedTop, firstInChat);
-                messageCell.isAvatarVisible = messageCell.needDrawAvatar();
                 messageCell.setId(position);
             }
             else if (holder.getItemViewType() == MESSAGE_TYPE_SERVICE) {
