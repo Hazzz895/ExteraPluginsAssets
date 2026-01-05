@@ -13,6 +13,7 @@ import com.pessdes.chatexporter.tgnet.exported_Chat;
 import com.pessdes.chatexporter.tgnet.exported_Chats;
 
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.BackDrawable;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.DialogCell;
@@ -49,7 +50,7 @@ public class ExportedChatsActivity extends BaseFragment {
 
     @Override
     public View createView(Context context) {
-        actionBar.setBackButtonImage(R.drawable.ic_ab_back);
+        actionBar.setBackButtonDrawable(new BackDrawable(true));
         actionBar.setAllowOverlayTitle(true);
         actionBar.setTitle("Экспортированные чаты");
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {

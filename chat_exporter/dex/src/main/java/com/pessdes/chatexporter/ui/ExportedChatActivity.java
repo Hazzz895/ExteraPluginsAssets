@@ -137,7 +137,10 @@ public class ExportedChatActivity extends BaseFragment {
             name = "?";
         } else if (chat instanceof TLRPC.User) {
             var user = ((TLRPC.User) chat);
-            name = user.first_name + " " + user.last_name;
+            name = user.first_name;
+            if (user.last_name != null) {
+                name += " " + user.last_name;
+            }
         } else if (chat instanceof TLRPC.Chat) {
             name = ((TLRPC.Chat) chat).title;
         } else {
@@ -259,6 +262,8 @@ public class ExportedChatActivity extends BaseFragment {
         };
 
         chatListView.setLayoutAnimation(null);
+        chatListView.setClipToPadding(false);
+        chatListView.setPadding(0, ActionBar.getCurrentActionBarHeight() + AndroidUtilities.getStatusBarHeight(context), 0,0);
         manager = new LinearLayoutManager(context);
         manager.setStackFromEnd(true);
         chatListView.setLayoutManager(manager);
@@ -279,8 +284,7 @@ public class ExportedChatActivity extends BaseFragment {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 chatListView.invalidate();
-                log("scrolled", dy != 0, scrollingFloatingDate, floatingDateView.getTag());
-                if (dy != 0 && scrollingFloatingDate) {
+                if (scrollingFloatingDate) {
                     if (floatingDateView.getTag() == null) {
                         if (floatingDateAnimation != null) {
                             floatingDateAnimation.cancel();
@@ -288,7 +292,7 @@ public class ExportedChatActivity extends BaseFragment {
                         floatingDateView.setTag(1);
                         floatingDateAnimation = new AnimatorSet();
                         floatingDateAnimation.setDuration(150);
-                        floatingDateAnimation.playTogether(ObjectAnimator.ofFloat(floatingDateView, "alpha", 1.0f));
+                        floatingDateAnimation.playTogether(ObjectAnimator.ofFloat(floatingDateView, "alpha", 0.75f));
                         floatingDateAnimation.addListener(new AnimatorListenerAdapter() {
                             @Override
                             public void onAnimationEnd(Animator animation) {
@@ -313,7 +317,7 @@ public class ExportedChatActivity extends BaseFragment {
         chatListView.setAdapter(adapter = new ExportedChatActivity.ListAdapter(context));
 
         frameLayout.addView(chatListView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
-        frameLayout.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 4 + (AndroidUtilities.isTablet() ? 0 : AndroidUtilities.statusBarHeight), 0, 0));
+        frameLayout.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 8, 0, 0));
         frameLayout.addView(actionBar);
 
         return fragmentView;
