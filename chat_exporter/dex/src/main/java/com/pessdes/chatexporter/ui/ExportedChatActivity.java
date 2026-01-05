@@ -279,6 +279,7 @@ public class ExportedChatActivity extends BaseFragment {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 chatListView.invalidate();
+                log("scrolled", dy != 0, scrollingFloatingDate, floatingDateView.getTag());
                 if (dy != 0 && scrollingFloatingDate) {
                     if (floatingDateView.getTag() == null) {
                         if (floatingDateAnimation != null) {
@@ -297,6 +298,7 @@ public class ExportedChatActivity extends BaseFragment {
                             }
                         });
                         floatingDateAnimation.start();
+                        log("animation started");
                     }
                 }
                 updateFloatingDate();
@@ -306,11 +308,13 @@ public class ExportedChatActivity extends BaseFragment {
         floatingDateView = new ChatActionCell(context);
         floatingDateView.setAlpha(0.0f);
         floatingDateView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        frameLayout.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 4, 0, 0));
 
         chatListView.setVerticalScrollBarEnabled(true);
-        frameLayout.addView(chatListView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         chatListView.setAdapter(adapter = new ExportedChatActivity.ListAdapter(context));
+
+        frameLayout.addView(chatListView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        frameLayout.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 4 + (AndroidUtilities.isTablet() ? 0 : AndroidUtilities.statusBarHeight), 0, 0));
+        frameLayout.addView(actionBar);
 
         return fragmentView;
     }
