@@ -10,6 +10,8 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.os.Build;
+import android.os.Bundle;
+import android.text.style.CharacterStyle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,16 +24,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.pessdes.chatexporter.tgnet.exported_Chat;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.BotInlineKeyboard;
 import org.telegram.messenger.ChatMessageSharedResources;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.tgnet.TLObject;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BackDrawable;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ChatActionCell;
 import org.telegram.ui.Cells.ChatMessageCell;
+import org.telegram.ui.Cells.TextSelectionHelper;
+import org.telegram.ui.Components.AnimatedEmojiSpan;
 import org.telegram.ui.Components.ChatAvatarContainer;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerAnimationScrollHelper;
@@ -39,6 +45,7 @@ import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
 import org.telegram.ui.PhotoViewer;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.ui.PinchToZoomHelper;
 
 import java.util.ArrayList;
 
@@ -263,7 +270,8 @@ public class ExportedChatActivity extends BaseFragment {
 
         chatListView.setLayoutAnimation(null);
         chatListView.setClipToPadding(false);
-        chatListView.setPadding(0, ActionBar.getCurrentActionBarHeight() + AndroidUtilities.getStatusBarHeight(context), 0,0);
+        var topPad = ActionBar.getCurrentActionBarHeight() + AndroidUtilities.getStatusBarHeight(context);
+        chatListView.setPadding(0, topPad, 0,0);
         manager = new LinearLayoutManager(context);
         manager.setStackFromEnd(true);
         chatListView.setLayoutManager(manager);
@@ -317,7 +325,7 @@ public class ExportedChatActivity extends BaseFragment {
         chatListView.setAdapter(adapter = new ExportedChatActivity.ListAdapter(context));
 
         frameLayout.addView(chatListView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
-        frameLayout.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 8, 0, 0));
+        frameLayout.addView(floatingDateView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 8 + topPad, 0, 0));
         frameLayout.addView(actionBar);
 
         return fragmentView;
@@ -390,6 +398,412 @@ public class ExportedChatActivity extends BaseFragment {
             View view;
             if (viewType == MESSAGE_TYPE_MESSAGE) {
                 var cell = new ChatMessageCell(context, getCurrentAccount(), false, sharedResources, getResourceProvider());
+                cell.setDelegate(new ChatMessageCell.ChatMessageCellDelegate() {
+                    @Override
+                    public boolean isReplyOrSelf() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.isReplyOrSelf();
+                    }
+
+                    @Override
+                    public void didPressExtendedMediaPreview(ChatMessageCell cell, TLRPC.KeyboardButton button) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressExtendedMediaPreview(cell, button);
+                    }
+
+                    @Override
+                    public void didPressUserStatus(ChatMessageCell cell, TLRPC.User user, TLRPC.Document document, String giftSlug) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressUserStatus(cell, user, document, giftSlug);
+                    }
+
+                    @Override
+                    public void didPressUserAvatar(ChatMessageCell cell, TLRPC.User user, float touchX, float touchY, boolean asForward) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressUserAvatar(cell, user, touchX, touchY, asForward);
+                    }
+
+                    @Override
+                    public boolean didLongPressUserAvatar(ChatMessageCell cell, TLRPC.User user, float touchX, float touchY) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.didLongPressUserAvatar(cell, user, touchX, touchY);
+                    }
+
+                    @Override
+                    public void didPressHiddenForward(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressHiddenForward(cell);
+                    }
+
+                    @Override
+                    public void didPressViaBotNotInline(ChatMessageCell cell, long botId) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressViaBotNotInline(cell, botId);
+                    }
+
+                    @Override
+                    public void didPressViaBot(ChatMessageCell cell, String username) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressViaBot(cell, username);
+                    }
+
+                    @Override
+                    public void didPressBoostCounter(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressBoostCounter(cell);
+                    }
+
+                    @Override
+                    public void didPressChannelAvatar(ChatMessageCell cell, TLRPC.Chat chat, int postId, float touchX, float touchY, boolean asForward) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressChannelAvatar(cell, chat, postId, touchX, touchY, asForward);
+                    }
+
+                    @Override
+                    public boolean didLongPressChannelAvatar(ChatMessageCell cell, TLRPC.Chat chat, int postId, float touchX, float touchY) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.didLongPressChannelAvatar(cell, chat, postId, touchX, touchY);
+                    }
+
+                    @Override
+                    public void didPressCancelSendButton(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressCancelSendButton(cell);
+                    }
+
+                    @Override
+                    public void didLongPress(ChatMessageCell cell, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didLongPress(cell, x, y);
+                    }
+
+                    @Override
+                    public void didPressReplyMessage(ChatMessageCell cell, int id, float x, float y, boolean longpress) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressReplyMessage(cell, id, x, y, longpress);
+                    }
+
+                    @Override
+                    public boolean isProgressLoading(ChatMessageCell cell, int type) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.isProgressLoading(cell, type);
+                    }
+
+                    @Override
+                    public String getProgressLoadingBotButtonUrl(ChatMessageCell cell) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.getProgressLoadingBotButtonUrl(cell);
+                    }
+
+                    @Override
+                    public CharacterStyle getProgressLoadingLink(ChatMessageCell cell) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.getProgressLoadingLink(cell);
+                    }
+
+                    @Override
+                    public void didPressUrl(ChatMessageCell cell, CharacterStyle url, boolean longPress) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressUrl(cell, url, longPress);
+                    }
+
+                    @Override
+                    public void didPressCodeCopy(ChatMessageCell cell, MessageObject.TextLayoutBlock block) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressCodeCopy(cell, block);
+                    }
+
+                    @Override
+                    public void didPressChannelRecommendation(ChatMessageCell cell, TLObject chat, boolean longPress) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressChannelRecommendation(cell, chat, longPress);
+                    }
+
+                    @Override
+                    public void didPressMoreChannelRecommendations(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressMoreChannelRecommendations(cell);
+                    }
+
+                    @Override
+                    public void didPressChannelRecommendationsClose(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressChannelRecommendationsClose(cell);
+                    }
+
+                    @Override
+                    public void needOpenWebView(MessageObject message, String url, String title, String description, String originalUrl, int w, int h) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.needOpenWebView(message, url, title, description, originalUrl, w, h);
+                    }
+
+                    @Override
+                    public void didPressWebPage(ChatMessageCell cell, TLRPC.WebPage webpage, String url, boolean safe) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressWebPage(cell, webpage, url, safe);
+                    }
+
+                    @Override
+                    public void didPressImage(ChatMessageCell cell, float x, float y, boolean fullPreview) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressImage(cell, x, y, fullPreview);
+                    }
+
+                    @Override
+                    public void didPressGroupImage(ChatMessageCell cell, ImageReceiver imageReceiver, TLRPC.MessageExtendedMedia media, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressGroupImage(cell, imageReceiver, media, x, y);
+                    }
+
+                    @Override
+                    public void didPressSideButton(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressSideButton(cell);
+                    }
+
+                    @Override
+                    public void didQuickShareStart(ChatMessageCell cell, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didQuickShareStart(cell, x, y);
+                    }
+
+                    @Override
+                    public void didQuickShareMove(ChatMessageCell cell, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didQuickShareMove(cell, x, y);
+                    }
+
+                    @Override
+                    public void didQuickShareEnd(ChatMessageCell cell, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didQuickShareEnd(cell, x, y);
+                    }
+
+                    @Override
+                    public void didPressOther(ChatMessageCell cell, float otherX, float otherY) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressOther(cell, otherX, otherY);
+                    }
+
+                    @Override
+                    public void didPressSponsoredClose(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressSponsoredClose(cell);
+                    }
+
+                    @Override
+                    public void didPressSponsoredInfo(ChatMessageCell cell, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressSponsoredInfo(cell, x, y);
+                    }
+
+                    @Override
+                    public void didPressTime(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressTime(cell);
+                    }
+
+                    @Override
+                    public void didPressBotButton(ChatMessageCell cell, TLRPC.KeyboardButton button) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressBotButton(cell, button);
+                    }
+
+                    @Override
+                    public void didLongPressBotButton(ChatMessageCell cell, TLRPC.KeyboardButton button) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didLongPressBotButton(cell, button);
+                    }
+
+                    @Override
+                    public void didPressCustomBotButton(ChatMessageCell cell, BotInlineKeyboard.ButtonCustom button) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressCustomBotButton(cell, button);
+                    }
+
+                    @Override
+                    public void didLongPressCustomBotButton(ChatMessageCell cell, BotInlineKeyboard.ButtonCustom button) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didLongPressCustomBotButton(cell, button);
+                    }
+
+                    @Override
+                    public void didPressReaction(ChatMessageCell cell, TLRPC.ReactionCount reaction, boolean longpress, float x, float y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressReaction(cell, reaction, longpress, x, y);
+                    }
+
+                    @Override
+                    public void didPressVoteButtons(ChatMessageCell cell, ArrayList<TLRPC.PollAnswer> buttons, int showCount, int x, int y) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressVoteButtons(cell, buttons, showCount, x, y);
+                    }
+
+                    @Override
+                    public boolean didPressToDoButton(ChatMessageCell cell, TLRPC.TodoItem task, boolean enable) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.didPressToDoButton(cell, task, enable);
+                    }
+
+                    @Override
+                    public boolean didLongPressToDoButton(ChatMessageCell cell, TLRPC.TodoItem task) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.didLongPressToDoButton(cell, task);
+                    }
+
+                    @Override
+                    public void didPressInstantButton(ChatMessageCell cell, int type) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressInstantButton(cell, type);
+                    }
+
+                    @Override
+                    public void didPressGiveawayChatButton(ChatMessageCell cell, int pressedPos) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressGiveawayChatButton(cell, pressedPos);
+                    }
+
+                    @Override
+                    public void didPressCommentButton(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressCommentButton(cell);
+                    }
+
+                    @Override
+                    public void didPressHint(ChatMessageCell cell, int type) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressHint(cell, type);
+                    }
+
+                    @Override
+                    public void needShowPremiumFeatures(String source) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.needShowPremiumFeatures(source);
+                    }
+
+                    @Override
+                    public void needShowPremiumBulletin(int type) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.needShowPremiumBulletin(type);
+                    }
+
+                    @Override
+                    public String getAdminRank(long uid) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.getAdminRank(uid);
+                    }
+
+                    @Override
+                    public boolean needPlayMessage(ChatMessageCell cell, MessageObject messageObject, boolean muted) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.needPlayMessage(cell, messageObject, muted);
+                    }
+
+                    @Override
+                    public boolean drawingVideoPlayerContainer() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.drawingVideoPlayerContainer();
+                    }
+
+                    @Override
+                    public boolean canPerformActions() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.canPerformActions();
+                    }
+
+                    @Override
+                    public boolean canPerformReply() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.canPerformReply();
+                    }
+
+                    @Override
+                    public boolean onAccessibilityAction(int action, Bundle arguments) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.onAccessibilityAction(action, arguments);
+                    }
+
+                    @Override
+                    public void videoTimerReached() {
+                        ChatMessageCell.ChatMessageCellDelegate.super.videoTimerReached();
+                    }
+
+                    @Override
+                    public void didStartVideoStream(MessageObject message) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didStartVideoStream(message);
+                    }
+
+                    @Override
+                    public boolean shouldRepeatSticker(MessageObject message) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.shouldRepeatSticker(message);
+                    }
+
+                    @Override
+                    public void setShouldNotRepeatSticker(MessageObject message) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.setShouldNotRepeatSticker(message);
+                    }
+
+                    @Override
+                    public TextSelectionHelper.ChatListTextSelectionHelper getTextSelectionHelper() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.getTextSelectionHelper();
+                    }
+
+                    @Override
+                    public boolean hasSelectedMessages() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.hasSelectedMessages();
+                    }
+
+                    @Override
+                    public void needReloadPolls() {
+                        ChatMessageCell.ChatMessageCellDelegate.super.needReloadPolls();
+                    }
+
+                    @Override
+                    public void onDiceFinished() {
+                        ChatMessageCell.ChatMessageCellDelegate.super.onDiceFinished();
+                    }
+
+                    @Override
+                    public boolean shouldDrawThreadProgress(ChatMessageCell cell, boolean delayed) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.shouldDrawThreadProgress(cell, delayed);
+                    }
+
+                    @Override
+                    public PinchToZoomHelper getPinchToZoomHelper() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.getPinchToZoomHelper();
+                    }
+
+                    @Override
+                    public boolean keyboardIsOpened() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.keyboardIsOpened();
+                    }
+
+                    @Override
+                    public boolean isLandscape() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.isLandscape();
+                    }
+
+                    @Override
+                    public void invalidateBlur() {
+                        ChatMessageCell.ChatMessageCellDelegate.super.invalidateBlur();
+                    }
+
+                    @Override
+                    public boolean canDrawOutboundsContent() {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.canDrawOutboundsContent();
+                    }
+
+                    @Override
+                    public boolean didPressAnimatedEmoji(ChatMessageCell cell, AnimatedEmojiSpan span) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.didPressAnimatedEmoji(cell, span);
+                    }
+
+                    @Override
+                    public void didPressTopicButton(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressTopicButton(cell);
+                    }
+
+                    @Override
+                    public boolean shouldShowTopicButton(ChatMessageCell cell) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.shouldShowTopicButton(cell);
+                    }
+
+                    @Override
+                    public void didPressDialogButton(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressDialogButton(cell);
+                    }
+
+                    @Override
+                    public boolean shouldShowDialogButton(ChatMessageCell cell) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.shouldShowDialogButton(cell);
+                    }
+
+                    @Override
+                    public void didPressEmojiStatus() {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressEmojiStatus();
+                    }
+
+                    @Override
+                    public boolean doNotShowLoadingReply(MessageObject msg) {
+                        return ChatMessageCell.ChatMessageCellDelegate.super.doNotShowLoadingReply(msg);
+                    }
+
+                    @Override
+                    public void didPressAboutRevenueSharingAds() {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressAboutRevenueSharingAds();
+                    }
+
+                    @Override
+                    public void didPressRevealSensitiveContent(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressRevealSensitiveContent(cell);
+                    }
+
+                    @Override
+                    public void didPressEffect(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressEffect(cell);
+                    }
+
+                    @Override
+                    public void didPressFactCheckWhat(ChatMessageCell cell, int cx, int cy) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressFactCheckWhat(cell, cx, cy);
+                    }
+
+                    @Override
+                    public void didPressFactCheck(ChatMessageCell cell) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.didPressFactCheck(cell);
+                    }
+
+                    @Override
+                    public void forceUpdate(ChatMessageCell cell, boolean anchorScroll) {
+                        ChatMessageCell.ChatMessageCellDelegate.super.forceUpdate(cell, anchorScroll);
+                    }
+                });
                 view = cell;
             } else if (viewType == MESSAGE_TYPE_SERVICE) {
                 view = new ChatActionCell(context, false, getResourceProvider());
