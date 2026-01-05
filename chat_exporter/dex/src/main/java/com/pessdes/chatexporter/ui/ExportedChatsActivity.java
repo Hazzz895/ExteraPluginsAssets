@@ -81,7 +81,7 @@ public class ExportedChatsActivity extends BaseFragment {
         });
 
         setOnChatClickListener((chat, fragment) -> {
-            fragment.presentFragment(new ExportedChatActivity(chat));
+            fragment.presentFragment(new ExportedChatActivity(chat, false));
         });
         return frameLayout;
     }

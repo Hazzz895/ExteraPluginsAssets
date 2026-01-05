@@ -85,7 +85,21 @@ public class Util {
         logInternal(String.format("[%s:dex] %s", "chat_exporter", message));
     }
 
-    public static void log(Object object) {
-        log(object.toString());
+    public static void log(Object... objects) {
+        StringBuilder builder = new StringBuilder();
+        if (objects.length != 1) {
+            builder.append("(");
+        }
+        for (int i = 0; i < objects.length; i++) {
+            var object = objects[i];
+            builder.append(object);
+            if (i != objects.length - 1) {
+                builder.append(", ");
+            }
+        }
+        if (objects.length != 1) {
+            builder.append(")");
+        }
+        log(builder.toString());
     }
 }
