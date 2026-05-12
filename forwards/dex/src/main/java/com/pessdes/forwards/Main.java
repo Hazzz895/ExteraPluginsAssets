@@ -25,6 +25,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 
 public class Main {
+    public static final String DrawableKey = "mini_forwarded";
     public static Drawable ForwardsDrawable = null;
 
     private static XC_MethodHook.Unhook measureHook = null;
@@ -47,7 +48,7 @@ public class Main {
 
         if (ForwardsDrawable == null) {
             var context = ApplicationLoader.applicationContext;
-            int resId = context.getResources().getIdentifier("msg_forward", "drawable", context.getPackageName());
+            int resId = context.getResources().getIdentifier(DrawableKey, "drawable", context.getPackageName());
             if (resId != 0) {
                 ForwardsDrawable = context.getResources().getDrawable(resId).mutate();
             }
