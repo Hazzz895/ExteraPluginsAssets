@@ -3,11 +3,13 @@ package com.pessdes.forwards;
 import static org.telegram.messenger.AndroidUtilities.dp;
 
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.text.Layout;
 import android.text.StaticLayout;
+import android.text.TextPaint;
 import org.telegram.tgnet.TLRPC;
 
 import org.telegram.messenger.ApplicationLoader;
@@ -31,6 +33,11 @@ public class Main {
     private static XC_MethodHook.Unhook measureHook = null;
     private static XC_MethodHook.Unhook drawHook = null;
     private static Utilities.Callback<Object[]> logger = null;
+
+    private static Field chatTimePaintField = null;
+    private static boolean fieldSearched = false;
+    private static TextPaint wrapperPaint = null;
+    private static Object lastValue = null;
 
     private static void log(Object... messages) {
         if (logger == null) return;
@@ -65,6 +72,61 @@ public class Main {
     public static void unhook() {
         if (measureHook != null) measureHook.unhook();
         if (drawHook != null) drawHook.unhook();
+    }
+
+    private static TextPaint getTimePaint() {
+        if (!fieldSearched) {
+            fieldSearched = true;
+            try {
+                chatTimePaintField = Theme.class.getDeclaredField("chat_timePaint");
+                chatTimePaintField.setAccessible(true);
+            } catch (Throwable t) {
+                try {
+                    for (Field f : Theme.class.getDeclaredFields()) {
+                        if (f.getName().equalsIgnoreCase("chat_timePaint") || f.getName().toLowerCase().contains("timepaint")) {
+                            chatTimePaintField = f;
+                            chatTimePaintField.setAccessible(true);
+                            break;
+                        }
+                    }
+                } catch (Throwable e) {
+                    log("Failed to find any timePaint field", e);
+                }
+            }
+        }
+
+        if (chatTimePaintField != null) {
+            try {
+                Object value = chatTimePaintField.get(null);
+                if (value instanceof TextPaint) {
+                    return (TextPaint) value;
+                } else if (value instanceof Paint) {
+                    if (wrapperPaint == null || lastValue != value) {
+                        lastValue = value;
+                        wrapperPaint = new TextPaint((Paint) value);
+                    } else {
+                        wrapperPaint.set((Paint) value);
+                    }
+                    return wrapperPaint;
+                }
+            } catch (Throwable t) {
+            }
+        }
+
+        TextPaint fallback = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        fallback.setTextSize(dp(12));
+        return fallback;
+    }
+
+    private static int getTimeColor(ChatMessageCell cell, MessageObject mobj) {
+        int color = getIntField(cell, "timeColor", 0);
+        if (color == 0) {
+            color = getIntField(cell, "currentTimeColor", 0);
+        }
+        if (color == 0) {
+            color = Theme.getColor(mobj != null && mobj.isOutOwner() ? Theme.key_chat_outTimeText : Theme.key_chat_inTimeText);
+        }
+        return color;
     }
 
     private static Object getPrivateField(Object obj, String fieldName) {
@@ -110,8 +172,9 @@ public class Main {
 
         public static MeasureData create(int forwards) {
             var f = String.format("%s", LocaleController.formatShortNumber(Math.max(1, forwards), null));
-            var s = (int) Math.ceil(Theme.chat_timePaint.measureText(f));
-            var t = Main.ForwardsDrawable.getIntrinsicWidth() * (Theme.chat_timePaint.getTextSize() - dp(2)) / Main.ForwardsDrawable.getIntrinsicHeight();
+            TextPaint timePaint = getTimePaint();
+            var s = (int) Math.ceil(timePaint.measureText(f));
+            var t = Main.ForwardsDrawable.getIntrinsicWidth() * (timePaint.getTextSize() - dp(2)) / Main.ForwardsDrawable.getIntrinsicHeight();
             return new MeasureData(f, s, t);
         }
     }
@@ -148,10 +211,13 @@ public class Main {
                 if (forwards <= 0) return;
 
                 MeasureData data = MeasureData.create(forwards);
+                TextPaint timePaint = getTimePaint();
+                int timeColor = getTimeColor(cell, mobj);
+                timePaint.setColor(timeColor);
 
                 StaticLayout forwardLayout = new StaticLayout(
                         data.forwardsString,
-                        Theme.chat_timePaint,
+                        timePaint,
                         data.forwardsTextWidth,
                         Layout.Alignment.ALIGN_NORMAL,
                         1.0f,
@@ -188,7 +254,7 @@ public class Main {
                     if (hasReplies) {
                         int repliesTextWidth = getIntField(cell, "repliesTextWidth", 0);
                         Drawable drawable = Theme.chat_msgInRepliesDrawable;
-                        float drawableWidth = drawable.getIntrinsicWidth() * (Theme.chat_timePaint.getTextSize() - dp(2)) / drawable.getIntrinsicHeight();
+                        float drawableWidth = drawable.getIntrinsicWidth() * (timePaint.getTextSize() - dp(2)) / drawable.getIntrinsicHeight();
                         offsetX += drawableWidth + repliesTextWidth + dp(10);
                     }
 
@@ -197,7 +263,7 @@ public class Main {
                     if (hasViewsLayout || animateViewsLayout) {
                         int viewsTextWidth = getIntField(cell, "viewsTextWidth", 0);
                         Drawable drawable = Theme.chat_msgInViewsDrawable;
-                        float drawableWidth = drawable.getIntrinsicWidth() * (Theme.chat_timePaint.getTextSize() - dp(2)) / drawable.getIntrinsicHeight();
+                        float drawableWidth = drawable.getIntrinsicWidth() * (timePaint.getTextSize() - dp(2)) / drawable.getIntrinsicHeight();
                         offsetX += drawableWidth + viewsTextWidth + dp(10);
                     }
 
@@ -223,21 +289,21 @@ public class Main {
 
                 float y = cell.getTimeY(timeYOffset);
 
-                Main.ForwardsDrawable.setColorFilter(new PorterDuffColorFilter(Theme.chat_timePaint.getColor(), PorterDuff.Mode.SRC_IN));
+                Main.ForwardsDrawable.setColorFilter(new PorterDuffColorFilter(timeColor, PorterDuff.Mode.SRC_IN));
 
                 float w;
                 try {
                     Method setDrawableBounds = cell.getClass().getDeclaredMethod("setDrawableBounds", Drawable.class, float.class, float.class, float.class);
                     setDrawableBounds.setAccessible(true);
-                    Object res = setDrawableBounds.invoke(cell, Main.ForwardsDrawable, forwardX, y + dp(1.5f), Theme.chat_timePaint.getTextSize() - dp(2));
+                    Object res = setDrawableBounds.invoke(cell, Main.ForwardsDrawable, forwardX, y + dp(1.5f), timePaint.getTextSize() - dp(2));
                     w = res instanceof Number ? ((Number) res).floatValue() : 0;
                 } catch (Throwable ignored) {
-                    w = Main.ForwardsDrawable.getIntrinsicWidth() * (Theme.chat_timePaint.getTextSize() - dp(2)) / Main.ForwardsDrawable.getIntrinsicHeight();
+                    w = Main.ForwardsDrawable.getIntrinsicWidth() * (timePaint.getTextSize() - dp(2)) / Main.ForwardsDrawable.getIntrinsicHeight();
                     Main.ForwardsDrawable.setBounds(
                             (int) forwardX,
                             (int) (y + dp(1.5f)),
                             (int) (forwardX + w),
-                            (int) (y + dp(1.5f) + Theme.chat_timePaint.getTextSize() - dp(2))
+                            (int) (y + dp(1.5f) + timePaint.getTextSize() - dp(2))
                     );
                 }
 
