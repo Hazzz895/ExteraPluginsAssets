@@ -93,6 +93,32 @@ public class Main {
         return null;
     }
 
+    private static DialogsActivity findDialogsActivity(View recycler) {
+        try {
+            var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
+            if (mainTabsActivity != null) {
+                return mainTabsActivity.getDialogsActivity();
+            }
+        } catch (Throwable ignored) {}
+
+        if (recycler != null) {
+            Object parentPage = getPrivateField(recycler, "parentPage");
+            if (parentPage != null) {
+                Object outer = getPrivateField(parentPage, "this$0");
+                if (outer instanceof DialogsActivity) {
+                    return (DialogsActivity) outer;
+                }
+            }
+
+            Object outerDirect = getPrivateField(recycler, "this$0");
+            if (outerDirect instanceof DialogsActivity) {
+                return (DialogsActivity) outerDirect;
+            }
+        }
+
+        return LaunchActivity.findFragment(DialogsActivity.class);
+    }
+
     private static int calculateTargetTop(DialogsActivity activity, View recycler) throws InvocationTargetException, IllegalAccessException {
         var actionBar = activity.getActionBar();
         if (actionBar == null) {
@@ -151,8 +177,7 @@ public class Main {
                 var height = parent.getMeasuredHeight();
                 Object pbObj = callPrivateMethod(activity, "calculateListViewPaddingBottom");
                 int paddingBottom = pbObj instanceof Number ? ((Number) pbObj).intValue() : 0;
-                var barHeight = filterTabsView.getMeasuredHeight();
-                var slideOffset = (1.0f - filterTabsView.getAlpha()) * barHeight;
+
                 float translationY = height - paddingBottom - filterTabsView.getTop();
                 filterTabsView.setTranslationY(translationY);
             }
@@ -246,21 +271,18 @@ public class Main {
         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
             var recycler = (View) param.thisObject;
 
-            var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
-            if (mainTabsActivity != null) {
-                var activity = mainTabsActivity.getDialogsActivity();
-                if (activity != null) {
-                    var foldersBar = getFilterTabsView(activity);
-                    if (foldersBar != null && foldersBar.getVisibility() == View.VISIBLE) {
+            DialogsActivity activity = findDialogsActivity(recycler);
+            if (activity != null) {
+                var foldersBar = getFilterTabsView(activity);
+                if (foldersBar != null && foldersBar.getVisibility() == View.VISIBLE) {
+                    try {
+                        int targetTop = calculateTargetTop(activity, recycler);
+                        recycler.setPadding(0, targetTop, 0, recycler.getPaddingBottom());
                         try {
-                            int targetTop = calculateTargetTop(activity, recycler);
-                            recycler.setPadding(0, targetTop, 0, recycler.getPaddingBottom());
-                            try {
-                                callPrivateMethod(recycler, "setTopGlowOffset", targetTop);
-                            } catch (Exception ignored) {}
-                        } catch (Exception e) {
-                            log("Error adjusting layout top padding", e);
-                        }
+                            callPrivateMethod(recycler, "setTopGlowOffset", targetTop);
+                        } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log("Error adjusting layout top padding", e);
                     }
                 }
             }
