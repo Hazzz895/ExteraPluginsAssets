@@ -5,6 +5,8 @@ import android.view.View;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.Components.DialogsActivityTopBubblesFadeView;
+import org.telegram.ui.Components.DialogsActivityTopPanelLayout;
 import org.telegram.ui.Components.FilterTabsView;
 import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.LaunchActivity;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import me.vkryl.android.animator.BoolAnimator;
 
 public class Main {
     private static Utilities.Callback<Object[]> logger = null;
@@ -130,10 +133,9 @@ public class Main {
             top += AndroidUtilities.statusBarHeight;
         }
 
-        boolean hasStories = getBooleanField(activity, "hasStories", false);
         boolean actionModeFullyShowed = getBooleanField(activity, "actionModeFullyShowed", false);
 
-        if (hasStories && !actionModeFullyShowed) {
+        if (activity.hasStories && !actionModeFullyShowed) {
             top += AndroidUtilities.dp(85);
         }
 
@@ -141,25 +143,9 @@ public class Main {
             top += AndroidUtilities.dp(48);
         }
 
-        var topPanel = (View) getPrivateField(activity, "topPanelLayout");
+        var topPanel = (DialogsActivityTopPanelLayout) getPrivateField(activity, "topPanelLayout");
         if (topPanel != null && topPanel.getVisibility() == View.VISIBLE) {
-            int dp14 = AndroidUtilities.dp(14);
-            Object heightObj = callPrivateMethod(topPanel, "getAnimatedHeightWithPadding", dp14);
-            if (heightObj instanceof Number) {
-                top += ((Number) heightObj).intValue();
-            }
-
-            Object metadata = callPrivateMethod(topPanel, "getMetadata");
-            if (metadata == null) {
-                metadata = getPrivateField(topPanel, "metadata");
-            }
-            if (metadata != null) {
-                Object visObj = callPrivateMethod(metadata, "getTotalVisibility");
-                if (visObj instanceof Number) {
-                    float topPanelsVisibility = ((Number) visObj).floatValue();
-                    top -= (int) (AndroidUtilities.dp(5) * topPanelsVisibility);
-                }
-            }
+            top += (int) (topPanel.getAnimatedHeightWithPadding(AndroidUtilities.dp(14)) - (AndroidUtilities.dp(5) * topPanel.getMetadata().getTotalVisibility()));
         }
         return top;
     }
@@ -175,62 +161,35 @@ public class Main {
             if (p != null) {
                 var parent = (View) p;
                 var height = parent.getMeasuredHeight();
-                Object pbObj = callPrivateMethod(activity, "calculateListViewPaddingBottom");
-                int paddingBottom = pbObj instanceof Number ? ((Number) pbObj).intValue() : 0;
+
+                int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
 
                 float translationY = height - paddingBottom - filterTabsView.getTop();
                 filterTabsView.setTranslationY(translationY);
             }
 
-            var topPanel = (View) getPrivateField(activity, "topPanelLayout");
+            var topPanel = (DialogsActivityTopPanelLayout) getPrivateField(activity, "topPanelLayout");
             if (topPanel != null) {
                 float filtersTabHeight = AndroidUtilities.dp(43) * filterTabsView.getAlpha();
-                var animatorSearchVisible = getPrivateField(activity, "animatorSearchVisible");
-                float searchVisibleFactor = 0.0f;
-                if (animatorSearchVisible != null) {
-                    Object factorObj = callPrivateMethod(animatorSearchVisible, "getFloatValue");
-                    if (factorObj instanceof Number) {
-                        searchVisibleFactor = ((Number) factorObj).floatValue();
-                    }
-                }
-
-                float correction = filtersTabHeight * (1.0f - searchVisibleFactor);
+                var animatorSearchVisible = (BoolAnimator) getPrivateField(activity, "animatorSearchVisible");
+                float correction = filtersTabHeight * (1.0f - animatorSearchVisible.getFloatValue());
                 topPanel.setTranslationY(topPanel.getTranslationY() - correction);
             }
 
-            var topBubblesFade = getPrivateField(activity, "topBubblesFadeView");
+            var topBubblesFade = (DialogsActivityTopBubblesFadeView) getPrivateField(activity, "topBubblesFadeView");
             if (topBubblesFade != null) {
                 float topPanelsVisibility = 0.0f;
                 if (topPanel != null) {
-                    Object metadata = callPrivateMethod(topPanel, "getMetadata");
-                    if (metadata == null) {
-                        metadata = getPrivateField(topPanel, "metadata");
-                    }
-                    if (metadata != null) {
-                        Object visObj = callPrivateMethod(metadata, "getTotalVisibility");
-                        if (visObj instanceof Number) {
-                            topPanelsVisibility = ((Number) visObj).floatValue();
-                        }
-                    }
+                    topPanelsVisibility = topPanel.getMetadata().getTotalVisibility();
                 }
                 float filtersTabVisibility = filterTabsView.getAlpha();
 
-                float dp7 = AndroidUtilities.dp(7);
-                float dp50 = AndroidUtilities.dp(50);
-                float dp40 = AndroidUtilities.dp(40);
+                float s = AndroidUtilities.dp(7) + (AndroidUtilities.dp(50) - AndroidUtilities.dp(7)) * Math.min(topPanelsVisibility, filtersTabVisibility);
 
-                float s = dp7 + (dp50 - dp7) * Math.min(topPanelsVisibility, filtersTabVisibility);
+                float topPanelsHeight = topPanel == null ? 0 : topPanel.getAnimatedHeightWithPadding(0);
 
-                float topPanelsHeight = 0.0f;
-                if (topPanel != null) {
-                    Object heightObj = callPrivateMethod(topPanel, "getAnimatedHeightWithPadding", 0);
-                    if (heightObj instanceof Number) {
-                        topPanelsHeight = ((Number) heightObj).floatValue();
-                    }
-                }
-
-                float hParam = Math.min(dp40, topPanelsHeight - s);
-                callPrivateMethod(topBubblesFade, "setPosition", s, hParam);
+                float hParam = Math.min(AndroidUtilities.dp(40), topPanelsHeight - s);
+                topBubblesFade.setPosition(s, hParam);
             }
         }
     }
@@ -241,10 +200,9 @@ public class Main {
             var filterTabsView = getFilterTabsView(param.thisObject);
             if (filterTabsView == null) return;
 
-            int adjustment = (int) (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
             var fab = (View) getPrivateField(param.thisObject, "floatingButton3");
             if (fab != null) {
-                fab.setTranslationY(fab.getTranslationY() - adjustment);
+                fab.setTranslationY(fab.getTranslationY() - filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
             }
         }
     }
@@ -255,13 +213,9 @@ public class Main {
             var activity = param.thisObject;
             var filterTabsView = getFilterTabsView(activity);
             if (filterTabsView != null) {
-                Object result = param.getResult();
-                if (result instanceof Number) {
-                    int val = ((Number) result).intValue();
-                    int barHeight = filterTabsView.getMeasuredHeight();
-                    val += (int) (barHeight * filterTabsView.getAlpha());
-                    param.setResult(val);
-                }
+                var result = (int) param.getResult();
+                result += (int) (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
+                param.setResult(result);
             }
         }
     }
