@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import me.vkryl.android.animator.BoolAnimator;
 
@@ -125,6 +126,15 @@ public class Main {
             Hook(DialogsActivity.class, "calculateListViewPaddingBottom", new PaddingBottomHook());
             Hook(DialogsActivity.DialogsRecyclerView.class, "onLayout", new OnLayoutHook());
             Hook(DialogsActivity.class, "blur3_InvalidateBlur", new InvalidateBlurHook());
+            /*Hook(MainTabsActivity.class, "checkUi_fadeView", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    var ts = (MainTabsActivity) param.thisObject;
+                    var fadeView = (View) getPrivateField(ts, "fadeView");
+                    fadeView.setAlpha(1);
+                    fadeView.setVisibility(View.VISIBLE);
+                }
+            });*/
         } catch (Throwable t) {
             log("Failed to hook methods", t);
         }
@@ -310,8 +320,9 @@ public class Main {
                         if (translationView != null) {
                             tabsTranslationY = translationView.getTranslationY();
                         }
+                        var tabsView = (View) getPrivateField(mainTabsActivity, "tabsView");
 
-                        translationY = (height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight();
+                        translationY = ((height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight() + ((float) tabsView.getMeasuredHeight() / 2 * (1 - tabsView.getAlpha())));
                     } else {
                         int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
                         translationY = height - paddingBottom - filterTabsView.getTop();
