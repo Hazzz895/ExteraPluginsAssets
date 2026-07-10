@@ -1,14 +1,19 @@
 package com.pessdes.bottomfolders;
 
+import static org.telegram.ui.LaunchActivity.instance;
+
 import android.graphics.RectF;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LanguageDetector;
 import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
+import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.BubbleActivity;
 import org.telegram.ui.Components.DialogsActivityTopBubblesFadeView;
 import org.telegram.ui.Components.DialogsActivityTopPanelLayout;
 import org.telegram.ui.Components.FilterTabsView;
@@ -34,6 +39,7 @@ public class Main {
 
     private static final Map<String, Field> fieldCache = new HashMap<>();
     private static final Map<String, Method> methodCache = new HashMap<>();
+    private static boolean useAltGetFragment = true;
 
     private static void log(Object... messages) {
         if (logger == null) return;
@@ -87,6 +93,33 @@ public class Main {
         log("Initializing: Hooking methods...");
 
         try {
+            MainTabsUiHelper = Class.forName("com.exteragram.messenger.utils.ui.MainTabsUiHelper");
+        } catch (Throwable ignored) {}
+        try {
+            BottomNavigationBar = Class.forName("com.exteragram.messenger.config.BottomNavigationBar");
+        } catch (Throwable ignored) {
+            try {
+                BottomNavigationBar = Class.forName("com.exteragram.messenger.ExteraConfig$BottomNavigationBar");
+            }
+            catch (Throwable ignored2) {}
+        }
+
+        if (MainTabsUiHelper == null) {
+            log("[WARN]", "MainTabsUiHelper not found!");
+        }
+        if (BottomNavigationBar == null) {
+            log("[WARN]", "BottomNavigationBar not found!");
+        }
+
+        try {
+            useAltGetFragment = LaunchActivity.class.getMethod("findFragment", Class.class) == null;
+        }
+        catch (Throwable ignored) {
+            useAltGetFragment = true;
+        }
+
+
+        try {
             Hook(DialogsActivity.class, "updateContextViewPosition", new DialogsActivityCalculationsHook());
             Hook(DialogsActivity.class, "updateFloatingButtonOffset", new FabOffsetHook());
             Hook(DialogsActivity.class, "calculateListViewPaddingBottom", new PaddingBottomHook());
@@ -105,14 +138,6 @@ public class Main {
     static Class<?> MainTabsUiHelper = null;
     static Class<?> BottomNavigationBar = null;
 
-    static {
-        try {
-            MainTabsUiHelper = Class.forName("com.exteragram.messenger.utils.ui.MainTabsUiHelper");
-        } catch (Throwable ignored) {}
-        try {
-            BottomNavigationBar = Class.forName("com.exteragram.messenger.config.BottomNavigationBar");
-        } catch (Throwable ignored) {}
-    }
     private static boolean usesFloatingNavbar() {
         try {
             return (Boolean) callPrivateMethod(BottomNavigationBar, "floating");
@@ -147,9 +172,19 @@ public class Main {
         return null;
     }
 
-    private static DialogsActivity findDialogsActivity(View recycler) {
+    public static <T extends BaseFragment> T findFragment(Class<T> clazz) throws InvocationTargetException, IllegalAccessException {
         try {
-            var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
+            if (!useAltGetFragment) {
+                return LaunchActivity.findFragment(clazz);
+            }
+        }
+        catch (Throwable ignored) {}
+        return (T) callPrivateMethod(LaunchActivity.class, "findFragment", clazz);
+    }
+
+    private static DialogsActivity findDialogsActivity(View recycler) throws InvocationTargetException, IllegalAccessException {
+        try {
+            var mainTabsActivity = findFragment(MainTabsActivity.class);
             if (mainTabsActivity != null) {
                 return mainTabsActivity.getDialogsActivity();
             }
@@ -170,7 +205,7 @@ public class Main {
             }
         }
 
-        return LaunchActivity.findFragment(DialogsActivity.class);
+        return findFragment(DialogsActivity.class);
     }
 
     private static int calculateTargetTop(DialogsActivity activity, View recycler) throws InvocationTargetException, IllegalAccessException {
@@ -201,11 +236,46 @@ public class Main {
         return top;
     }
 
+    @Nullable
+    private static View getTabsTranslationView(Object mainTabsActivity) {
+        if (mainTabsActivity == null) return null;
+        View tabsViewWrapper = (View) getPrivateField(mainTabsActivity, "tabsViewWrapper");
+        if (tabsViewWrapper != null) {
+            return tabsViewWrapper;
+        }
+        return (View) getPrivateField(mainTabsActivity, "tabsView");
+    }
+
     private static int getFloatingNavbarHeight(DialogsActivity activity) {
-        int tabsHeightDp = 40;
+        int tabsHeightPx = 0;
         try {
-            tabsHeightDp = (int) callPrivateMethod(MainTabsUiHelper, "getTabsViewHeightDp");
+            if (MainTabsUiHelper != null) {
+                int tabsHeightDp = (int) callPrivateMethod(MainTabsUiHelper, "getTabsViewHeightDp");
+                tabsHeightPx = AndroidUtilities.dp(tabsHeightDp);
+            }
         } catch (Throwable ignored) {}
+
+        if (tabsHeightPx <= 0) {
+            try {
+                var mainTabsActivity = findFragment(MainTabsActivity.class);
+                if (mainTabsActivity != null) {
+                    View tabsView = (View) getPrivateField(mainTabsActivity, "tabsView");
+                    if (tabsView != null) {
+                        tabsHeightPx = tabsView.getMeasuredHeight();
+                        if (tabsHeightPx <= 0) {
+                            var lp = tabsView.getLayoutParams();
+                            if (lp != null && lp.height > 0) {
+                                tabsHeightPx = lp.height;
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
+
+        if (tabsHeightPx <= 0) {
+            tabsHeightPx = AndroidUtilities.dp(72);
+        }
 
         int navBarHeight = 0;
         if (activity != null) {
@@ -214,122 +284,138 @@ public class Main {
                 navBarHeight = (int) heightVal;
             }
         }
-        return AndroidUtilities.dp(tabsHeightDp) + navBarHeight;
+        return tabsHeightPx + navBarHeight;
     }
 
     private static class DialogsActivityCalculationsHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            var activity = (DialogsActivity) param.thisObject;
-            var filterTabsView = getFilterTabsView(activity);
-            if (filterTabsView == null) return;
+            try {
+                var activity = (DialogsActivity) param.thisObject;
+                var filterTabsView = getFilterTabsView(activity);
+                if (filterTabsView == null) return;
 
-            var p = filterTabsView.getParent();
-            if (p != null) {
-                var parent = (View) p;
-                var height = parent.getMeasuredHeight();
+                var p = filterTabsView.getParent();
+                if (p != null) {
+                    var parent = (View) p;
+                    var height = parent.getMeasuredHeight();
 
-                float translationY;
-                if (usesFloatingNavbar()) {
-                    var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
-                    View tabsViewWrapper = null;
-                    if (mainTabsActivity != null) {
-                        tabsViewWrapper = (View) getPrivateField(mainTabsActivity, "tabsViewWrapper");
+                    float translationY;
+                    if (usesFloatingNavbar()) {
+                        var mainTabsActivity = findFragment(MainTabsActivity.class);
+                        View translationView = getTabsTranslationView(mainTabsActivity);
+
+                        float tabsTranslationY = 0f;
+                        int tabsHeight = getFloatingNavbarHeight(activity);
+                        if (translationView != null) {
+                            tabsTranslationY = translationView.getTranslationY();
+                        }
+
+                        translationY = (height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight();
+                    } else {
+                        int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
+                        translationY = height - paddingBottom - filterTabsView.getTop();
                     }
-
-                    float tabsTranslationY = 0f;
-                    int tabsHeight = getFloatingNavbarHeight(activity);
-                    if (tabsViewWrapper != null) {
-                        tabsTranslationY = tabsViewWrapper.getTranslationY();
-                    }
-
-                    translationY = (height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight();
-                } else {
-                    int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
-                    translationY = height - paddingBottom - filterTabsView.getTop();
+                    filterTabsView.setTranslationY(translationY);
                 }
-                filterTabsView.setTranslationY(translationY);
-            }
 
-            var topPanel = (DialogsActivityTopPanelLayout) getPrivateField(activity, "topPanelLayout");
-            if (topPanel != null) {
-                float filtersTabHeight = AndroidUtilities.dp(43) * filterTabsView.getAlpha();
-                var animatorSearchVisible = (BoolAnimator) getPrivateField(activity, "animatorSearchVisible");
-                float correction = filtersTabHeight * (1.0f - animatorSearchVisible.getFloatValue());
-                topPanel.setTranslationY(topPanel.getTranslationY() - correction);
-            }
-
-            var topBubblesFade = (DialogsActivityTopBubblesFadeView) getPrivateField(activity, "topBubblesFadeView");
-            if (topBubblesFade != null) {
-                float topPanelsVisibility = 0.0f;
+                var topPanel = (DialogsActivityTopPanelLayout) getPrivateField(activity, "topPanelLayout");
                 if (topPanel != null) {
-                    topPanelsVisibility = topPanel.getMetadata().getTotalVisibility();
+                    float filtersTabHeight = AndroidUtilities.dp(43) * filterTabsView.getAlpha();
+                    var animatorSearchVisible = (BoolAnimator) getPrivateField(activity, "animatorSearchVisible");
+                    float correction = filtersTabHeight * (1.0f - animatorSearchVisible.getFloatValue());
+                    topPanel.setTranslationY(topPanel.getTranslationY() - correction);
                 }
-                float filtersTabVisibility = filterTabsView.getAlpha();
 
-                float s = AndroidUtilities.dp(7) + (AndroidUtilities.dp(50) - AndroidUtilities.dp(7)) * Math.min(topPanelsVisibility, filtersTabVisibility);
+                var topBubblesFade = (DialogsActivityTopBubblesFadeView) getPrivateField(activity, "topBubblesFadeView");
+                if (topBubblesFade != null) {
+                    float topPanelsVisibility = 0.0f;
+                    if (topPanel != null) {
+                        topPanelsVisibility = topPanel.getMetadata().getTotalVisibility();
+                    }
+                    float filtersTabVisibility = filterTabsView.getAlpha();
 
-                float topPanelsHeight = topPanel == null ? 0 : topPanel.getAnimatedHeightWithPadding(0);
+                    float s = AndroidUtilities.dp(7) + (AndroidUtilities.dp(50) - AndroidUtilities.dp(7)) * Math.min(topPanelsVisibility, filtersTabVisibility);
 
-                float hParam = Math.min(AndroidUtilities.dp(40), topPanelsHeight - s);
-                topBubblesFade.setPosition(s, hParam);
+                    float topPanelsHeight = topPanel == null ? 0 : topPanel.getAnimatedHeightWithPadding(0);
+
+                    float hParam = Math.min(AndroidUtilities.dp(40), topPanelsHeight - s);
+                    topBubblesFade.setPosition(s, hParam);
+                }
+            }
+            catch (Throwable t) {
+                log("Error calculating", t);
             }
         }
     }
 
     private static class FabOffsetHook extends XC_MethodHook {
         @Override
-        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            var filterTabsView = getFilterTabsView(param.thisObject);
-            if (filterTabsView == null) return;
+        protected void afterHookedMethod(MethodHookParam param) {
+            try {
+                var filterTabsView = getFilterTabsView(param.thisObject);
+                if (filterTabsView == null) return;
 
-            var fab = (View) getPrivateField(param.thisObject, "floatingButton3");
-            if (fab != null) {
-                fab.setTranslationY(fab.getTranslationY() - filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
+                var fab = (View) getPrivateField(param.thisObject, "floatingButton3");
+                if (fab != null) {
+                    fab.setTranslationY(fab.getTranslationY() - filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
+                }
+            }
+            catch (Exception e) {
+                log("Error adjusting FAB offset", e);
             }
         }
     }
 
     private static class PaddingBottomHook extends XC_MethodHook {
         @Override
-        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            var activity = param.thisObject;
-            var filterTabsView = getFilterTabsView(activity);
-            if (filterTabsView != null) {
-                var result = (int) param.getResult();
+        protected void afterHookedMethod(MethodHookParam param) {
+            try {
+                var activity = param.thisObject;
+                var filterTabsView = getFilterTabsView(activity);
+                if (filterTabsView != null) {
+                    var result = (int) param.getResult();
 
-                if (usesFloatingNavbar()) {
-                    int tabsHeight = getFloatingNavbarHeight((DialogsActivity) activity);
-                    if (tabsHeight > 0) {
-                        result = tabsHeight;
+                    if (usesFloatingNavbar()) {
+                        int tabsHeight = getFloatingNavbarHeight((DialogsActivity) activity);
+                        if (tabsHeight > 0) {
+                            result = tabsHeight;
+                        }
                     }
-                }
 
-                result += (int) (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
-                param.setResult(result);
+                    result += (int) (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
+                    param.setResult(result);
+                }
+            } catch (Exception e) {
+                log("Error adjusting padding bottom", e);
             }
         }
     }
 
     private static class OnLayoutHook extends XC_MethodHook {
         @Override
-        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-            var recycler = (View) param.thisObject;
+        protected void beforeHookedMethod(MethodHookParam param) {
+            try {
+                var recycler = (View) param.thisObject;
 
-            DialogsActivity activity = findDialogsActivity(recycler);
-            if (activity != null) {
-                var foldersBar = getFilterTabsView(activity);
-                if (foldersBar != null && foldersBar.getVisibility() == View.VISIBLE) {
-                    try {
-                        int targetTop = calculateTargetTop(activity, recycler);
-                        recycler.setPadding(0, targetTop, 0, recycler.getPaddingBottom());
+                DialogsActivity activity = findDialogsActivity(recycler);
+                if (activity != null) {
+                    var foldersBar = getFilterTabsView(activity);
+                    if (foldersBar != null && foldersBar.getVisibility() == View.VISIBLE) {
                         try {
-                            callPrivateMethod(recycler, "setTopGlowOffset", targetTop);
-                        } catch (Exception ignored) {}
-                    } catch (Exception e) {
-                        log("Error adjusting layout top padding", e);
+                            int targetTop = calculateTargetTop(activity, recycler);
+                            recycler.setPadding(0, targetTop, 0, recycler.getPaddingBottom());
+                            try {
+                                callPrivateMethod(recycler, "setTopGlowOffset", targetTop);
+                            } catch (Exception ignored) {
+                            }
+                        } catch (Exception e) {
+                            log("Error adjusting layout top padding", e);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                log("Error adjusting layout", e);
             }
         }
     }
@@ -337,58 +423,59 @@ public class Main {
     private static class InvalidateBlurHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            var activity = (DialogsActivity) param.thisObject;
+            try {
+                var activity = (DialogsActivity) param.thisObject;
 
-            FilterTabsView filterTabsView = getFilterTabsView(activity);
-            if (filterTabsView == null || filterTabsView.getVisibility() != View.VISIBLE || filterTabsView.getAlpha() <= 0f) {
-                return;
-            }
-
-            View fragmentView = activity.fragmentView;
-            if (fragmentView == null) return;
-
-            int fragmentHeight = fragmentView.getMeasuredHeight();
-
-            float top;
-            float bottom = fragmentHeight;
-
-            if (usesFloatingNavbar()) {
-                var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
-                View tabsViewWrapper = null;
-                if (mainTabsActivity != null) {
-                    tabsViewWrapper = (View) getPrivateField(mainTabsActivity, "tabsViewWrapper");
-                }
-                float tabsTranslationY = 0f;
-                int tabsHeight = getFloatingNavbarHeight(activity);
-                if (tabsViewWrapper != null) {
-                    tabsTranslationY = tabsViewWrapper.getTranslationY();
+                FilterTabsView filterTabsView = getFilterTabsView(activity);
+                if (filterTabsView == null || filterTabsView.getVisibility() != View.VISIBLE || filterTabsView.getAlpha() <= 0f) {
+                    return;
                 }
 
-                top = fragmentHeight - tabsHeight + tabsTranslationY - (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
-            } else {
-                int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
-                top = fragmentHeight - paddingBottom;
-                if (activity.hasMainTabs) {
-                    int navigationBarHeight = (int) getPrivateField(activity, "navigationBarHeight");
-                    bottom = fragmentHeight - navigationBarHeight - AndroidUtilities.dp(8);
+                View fragmentView = activity.fragmentView;
+                if (fragmentView == null) return;
+
+                int fragmentHeight = fragmentView.getMeasuredHeight();
+
+                float top;
+                float bottom = fragmentHeight;
+
+                if (usesFloatingNavbar()) {
+                    var mainTabsActivity = findFragment(MainTabsActivity.class);
+                    View translationView = getTabsTranslationView(mainTabsActivity);
+                    float tabsTranslationY = 0f;
+                    int tabsHeight = getFloatingNavbarHeight(activity);
+                    if (translationView != null) {
+                        tabsTranslationY = translationView.getTranslationY();
+                    }
+
+                    top = fragmentHeight - tabsHeight + tabsTranslationY - (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
+                } else {
+                    int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
+                    top = fragmentHeight - paddingBottom;
+                    if (activity.hasMainTabs) {
+                        int navigationBarHeight = (int) getPrivateField(activity, "navigationBarHeight");
+                        bottom = fragmentHeight - navigationBarHeight - AndroidUtilities.dp(8);
+                    }
                 }
-            }
 
-            RectF iBlur3PositionMainTabs = (RectF) getPrivateField(activity, "iBlur3PositionMainTabs");
-            if (iBlur3PositionMainTabs != null) {
-                iBlur3PositionMainTabs.set(0, top, fragmentView.getMeasuredWidth(), bottom);
-                iBlur3PositionMainTabs.inset(0, LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) ? 0 : -AndroidUtilities.dp(48));
-            }
-
-            Object scrollableViewNoiseSuppressor = getPrivateField(activity, "scrollableViewNoiseSuppressor");
-            if (scrollableViewNoiseSuppressor != null) {
-                Object iBlur3Positions = getPrivateField(activity, "iBlur3Positions");
-                Object iBlur3Capture = getPrivateField(activity, "iBlur3Capture");
-
-                if (iBlur3Positions != null && iBlur3Capture != null) {
-                    callPrivateMethod(scrollableViewNoiseSuppressor, "setupRenderNodes", iBlur3Positions, 2);
-                    callPrivateMethod(scrollableViewNoiseSuppressor, "invalidateResultRenderNodes", iBlur3Capture, fragmentView.getMeasuredWidth(), fragmentHeight);
+                RectF iBlur3PositionMainTabs = (RectF) getPrivateField(activity, "iBlur3PositionMainTabs");
+                if (iBlur3PositionMainTabs != null) {
+                    iBlur3PositionMainTabs.set(0, top, fragmentView.getMeasuredWidth(), bottom);
+                    iBlur3PositionMainTabs.inset(0, LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) ? 0 : -AndroidUtilities.dp(48));
                 }
+
+                Object scrollableViewNoiseSuppressor = getPrivateField(activity, "scrollableViewNoiseSuppressor");
+                if (scrollableViewNoiseSuppressor != null) {
+                    Object iBlur3Positions = getPrivateField(activity, "iBlur3Positions");
+                    Object iBlur3Capture = getPrivateField(activity, "iBlur3Capture");
+
+                    if (iBlur3Positions != null && iBlur3Capture != null) {
+                        callPrivateMethod(scrollableViewNoiseSuppressor, "setupRenderNodes", iBlur3Positions, 2);
+                        callPrivateMethod(scrollableViewNoiseSuppressor, "invalidateResultRenderNodes", iBlur3Capture, fragmentView.getMeasuredWidth(), fragmentHeight);
+                    }
+                }
+            } catch (Exception e) {
+                log("Error invalidation blur", e);
             }
         }
     }
