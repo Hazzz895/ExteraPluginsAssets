@@ -1,8 +1,12 @@
 package com.pessdes.bottomfolders;
 
+import android.graphics.RectF;
 import android.view.View;
 
+import androidx.annotation.Nullable;
+
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.Components.DialogsActivityTopBubblesFadeView;
@@ -16,6 +20,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -25,6 +31,9 @@ public class Main {
     private static Utilities.Callback<Object[]> logger = null;
 
     private static final ArrayList<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
+
+    private static final Map<String, Field> fieldCache = new HashMap<>();
+    private static final Map<String, Method> methodCache = new HashMap<>();
 
     private static void log(Object... messages) {
         if (logger == null) return;
@@ -38,16 +47,27 @@ public class Main {
     private static Object getPrivateField(Object obj, String fieldName) {
         if (obj == null) return null;
         Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
-        while (clazz != null) {
-            try {
-                Field field = clazz.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                return field.get(obj instanceof Class ? null : obj);
-            } catch (NoSuchFieldException e) {
-                clazz = clazz.getSuperclass();
-            } catch (Exception e) {
-                return null;
+        String key = clazz.getName() + "#" + fieldName;
+        Field field = fieldCache.get(key);
+        if (field == null) {
+            Class<?> current = clazz;
+            while (current != null) {
+                try {
+                    field = current.getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    fieldCache.put(key, field);
+                    break;
+                } catch (NoSuchFieldException e) {
+                    current = current.getSuperclass();
+                } catch (Exception e) {
+                    return null;
+                }
             }
+        }
+        if (field != null) {
+            try {
+                return field.get(obj instanceof Class ? null : obj);
+            } catch (Exception ignored) {}
         }
         return null;
     }
@@ -71,6 +91,7 @@ public class Main {
             Hook(DialogsActivity.class, "updateFloatingButtonOffset", new FabOffsetHook());
             Hook(DialogsActivity.class, "calculateListViewPaddingBottom", new PaddingBottomHook());
             Hook(DialogsActivity.DialogsRecyclerView.class, "onLayout", new OnLayoutHook());
+            Hook(DialogsActivity.class, "blur3_InvalidateBlur", new InvalidateBlurHook());
         } catch (Throwable t) {
             log("Failed to hook methods", t);
         }
@@ -81,17 +102,47 @@ public class Main {
         return (FilterTabsView) getPrivateField(obj, "filterTabsView");
     }
 
+    static Class<?> MainTabsUiHelper = null;
+    static Class<?> BottomNavigationBar = null;
+
+    static {
+        try {
+            MainTabsUiHelper = Class.forName("com.exteragram.messenger.utils.ui.MainTabsUiHelper");
+        } catch (Throwable ignored) {}
+        try {
+            BottomNavigationBar = Class.forName("com.exteragram.messenger.config.BottomNavigationBar");
+        } catch (Throwable ignored) {}
+    }
+    private static boolean usesFloatingNavbar() {
+        try {
+            return (Boolean) callPrivateMethod(BottomNavigationBar, "floating");
+        }
+        catch (Throwable ignored) {}
+        return false;
+    }
+
     private static Object callPrivateMethod(Object obj, String methodName, Object... args) throws InvocationTargetException, IllegalAccessException {
         if (obj == null) return null;
-        Class<?> clazz = obj.getClass();
-        while (clazz != null) {
-            for (Method m : clazz.getDeclaredMethods()) {
-                if (m.getName().equals(methodName) && m.getParameterCount() == args.length) {
-                    m.setAccessible(true);
-                    return m.invoke(obj, args);
+        Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
+        String key = clazz.getName() + "#" + methodName + "#" + args.length;
+        Method method = methodCache.get(key);
+        if (method == null) {
+            Class<?> current = clazz;
+            while (current != null) {
+                for (Method m : current.getDeclaredMethods()) {
+                    if (m.getName().equals(methodName) && m.getParameterCount() == args.length) {
+                        m.setAccessible(true);
+                        method = m;
+                        methodCache.put(key, method);
+                        break;
+                    }
                 }
+                if (method != null) break;
+                current = current.getSuperclass();
             }
-            clazz = clazz.getSuperclass();
+        }
+        if (method != null) {
+            return method.invoke(obj instanceof Class ? null : obj, args);
         }
         return null;
     }
@@ -150,6 +201,22 @@ public class Main {
         return top;
     }
 
+    private static int getFloatingNavbarHeight(DialogsActivity activity) {
+        int tabsHeightDp = 40;
+        try {
+            tabsHeightDp = (int) callPrivateMethod(MainTabsUiHelper, "getTabsViewHeightDp");
+        } catch (Throwable ignored) {}
+
+        int navBarHeight = 0;
+        if (activity != null) {
+            Object heightVal = getPrivateField(activity, "navigationBarHeight");
+            if (heightVal instanceof Integer) {
+                navBarHeight = (int) heightVal;
+            }
+        }
+        return AndroidUtilities.dp(tabsHeightDp) + navBarHeight;
+    }
+
     private static class DialogsActivityCalculationsHook extends XC_MethodHook {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -162,9 +229,25 @@ public class Main {
                 var parent = (View) p;
                 var height = parent.getMeasuredHeight();
 
-                int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
+                float translationY;
+                if (usesFloatingNavbar()) {
+                    var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
+                    View tabsViewWrapper = null;
+                    if (mainTabsActivity != null) {
+                        tabsViewWrapper = (View) getPrivateField(mainTabsActivity, "tabsViewWrapper");
+                    }
 
-                float translationY = height - paddingBottom - filterTabsView.getTop();
+                    float tabsTranslationY = 0f;
+                    int tabsHeight = getFloatingNavbarHeight(activity);
+                    if (tabsViewWrapper != null) {
+                        tabsTranslationY = tabsViewWrapper.getTranslationY();
+                    }
+
+                    translationY = (height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight();
+                } else {
+                    int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
+                    translationY = height - paddingBottom - filterTabsView.getTop();
+                }
                 filterTabsView.setTranslationY(translationY);
             }
 
@@ -214,6 +297,14 @@ public class Main {
             var filterTabsView = getFilterTabsView(activity);
             if (filterTabsView != null) {
                 var result = (int) param.getResult();
+
+                if (usesFloatingNavbar()) {
+                    int tabsHeight = getFloatingNavbarHeight((DialogsActivity) activity);
+                    if (tabsHeight > 0) {
+                        result = tabsHeight;
+                    }
+                }
+
                 result += (int) (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
                 param.setResult(result);
             }
@@ -243,10 +334,71 @@ public class Main {
         }
     }
 
+    private static class InvalidateBlurHook extends XC_MethodHook {
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            var activity = (DialogsActivity) param.thisObject;
+
+            FilterTabsView filterTabsView = getFilterTabsView(activity);
+            if (filterTabsView == null || filterTabsView.getVisibility() != View.VISIBLE || filterTabsView.getAlpha() <= 0f) {
+                return;
+            }
+
+            View fragmentView = activity.fragmentView;
+            if (fragmentView == null) return;
+
+            int fragmentHeight = fragmentView.getMeasuredHeight();
+
+            float top;
+            float bottom = fragmentHeight;
+
+            if (usesFloatingNavbar()) {
+                var mainTabsActivity = LaunchActivity.findFragment(MainTabsActivity.class);
+                View tabsViewWrapper = null;
+                if (mainTabsActivity != null) {
+                    tabsViewWrapper = (View) getPrivateField(mainTabsActivity, "tabsViewWrapper");
+                }
+                float tabsTranslationY = 0f;
+                int tabsHeight = getFloatingNavbarHeight(activity);
+                if (tabsViewWrapper != null) {
+                    tabsTranslationY = tabsViewWrapper.getTranslationY();
+                }
+
+                top = fragmentHeight - tabsHeight + tabsTranslationY - (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
+            } else {
+                int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
+                top = fragmentHeight - paddingBottom;
+                if (activity.hasMainTabs) {
+                    int navigationBarHeight = (int) getPrivateField(activity, "navigationBarHeight");
+                    bottom = fragmentHeight - navigationBarHeight - AndroidUtilities.dp(8);
+                }
+            }
+
+            RectF iBlur3PositionMainTabs = (RectF) getPrivateField(activity, "iBlur3PositionMainTabs");
+            if (iBlur3PositionMainTabs != null) {
+                iBlur3PositionMainTabs.set(0, top, fragmentView.getMeasuredWidth(), bottom);
+                iBlur3PositionMainTabs.inset(0, LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) ? 0 : -AndroidUtilities.dp(48));
+            }
+
+            Object scrollableViewNoiseSuppressor = getPrivateField(activity, "scrollableViewNoiseSuppressor");
+            if (scrollableViewNoiseSuppressor != null) {
+                Object iBlur3Positions = getPrivateField(activity, "iBlur3Positions");
+                Object iBlur3Capture = getPrivateField(activity, "iBlur3Capture");
+
+                if (iBlur3Positions != null && iBlur3Capture != null) {
+                    callPrivateMethod(scrollableViewNoiseSuppressor, "setupRenderNodes", iBlur3Positions, 2);
+                    callPrivateMethod(scrollableViewNoiseSuppressor, "invalidateResultRenderNodes", iBlur3Capture, fragmentView.getMeasuredWidth(), fragmentHeight);
+                }
+            }
+        }
+    }
+
     public static void unhook() {
         for (var unhook : unhooks) {
             if (unhook != null) unhook.unhook();
         }
         unhooks.clear();
+        fieldCache.clear();
+        methodCache.clear();
     }
 }
