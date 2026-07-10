@@ -13,6 +13,7 @@ import org.telegram.messenger.LiteMode;
 import org.telegram.messenger.Utilities;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.INavigationLayout;
 import org.telegram.ui.BubbleActivity;
 import org.telegram.ui.Components.DialogsActivityTopBubblesFadeView;
 import org.telegram.ui.Components.DialogsActivityTopPanelLayout;
@@ -26,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -33,7 +35,7 @@ import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import me.vkryl.android.animator.BoolAnimator;
 
-public class Main {
+public abstract class Main {
     private static Utilities.Callback<Object[]> logger = null;
 
     private static final ArrayList<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
@@ -119,7 +121,6 @@ public class Main {
             useAltGetFragment = true;
         }
 
-
         try {
             Hook(DialogsActivity.class, "updateContextViewPosition", new DialogsActivityCalculationsHook());
             Hook(DialogsActivity.class, "updateFloatingButtonOffset", new FabOffsetHook());
@@ -182,16 +183,13 @@ public class Main {
         return null;
     }
 
-    public static <T extends BaseFragment> T findFragment(Class<T> clazz) throws InvocationTargetException, IllegalAccessException {
+    @SuppressWarnings("unchecked")
+    public static <T extends BaseFragment> T findFragment(Class<T> clazz) {
         try {
-            if (!useAltGetFragment) {
-                return LaunchActivity.findFragment(clazz);
-            }
-        }
-        catch (Throwable ignored) {}
-        return (T) callPrivateMethod(LaunchActivity.class, "findFragment", clazz);
+            return (T) callPrivateMethod(LaunchActivity.class, "findFragment", clazz);
+        } catch (Throwable ignored) {}
+        return null;
     }
-
     private static DialogsActivity findDialogsActivity(View recycler) throws InvocationTargetException, IllegalAccessException {
         try {
             var mainTabsActivity = findFragment(MainTabsActivity.class);
@@ -320,9 +318,12 @@ public class Main {
                         if (translationView != null) {
                             tabsTranslationY = translationView.getTranslationY();
                         }
-                        var tabsView = (View) getPrivateField(mainTabsActivity, "tabsView");
 
-                        translationY = ((height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight() + ((float) tabsView.getMeasuredHeight() / 2 * (1 - tabsView.getAlpha())));
+                        translationY = ((height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight());
+                        if (mainTabsActivity != null) {
+                            var tabsView = (View) getPrivateField(mainTabsActivity, "tabsView");
+                            translationY += ((float) tabsView.getMeasuredHeight() / 2 * (1 - tabsView.getAlpha()));
+                        }
                     } else {
                         int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
                         translationY = height - paddingBottom - filterTabsView.getTop();
