@@ -21,7 +21,6 @@ import org.telegram.ui.MainTabsActivity;
 import org.telegram.ui.MainTabsLayout;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +40,7 @@ public abstract class Main {
     private static final Map<String, Method> methodCache = new HashMap<>();
 
     @Nullable
-    private static Object getPrivateField(Object obj, String fieldName) {
+    private static Field getPrivateFieldField(Object obj, String fieldName) {
         if (obj == null) return null;
         Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
         String key = clazz.getName() + "#" + fieldName;
@@ -61,6 +60,12 @@ public abstract class Main {
                 }
             }
         }
+        return field;
+    }
+
+    @Nullable
+    private static Object getPrivateField(Object obj, String fieldName) {
+        var field = getPrivateFieldField(obj, fieldName);
         if (field != null) {
             try {
                 return field.get(obj instanceof Class ? null : obj);
@@ -69,8 +74,17 @@ public abstract class Main {
         return null;
     }
 
+    private static void setPrivateField(Object obj, String fieldName, Object value) {
+        var field = getPrivateFieldField(obj, fieldName);
+        if (field != null) {
+            try {
+                field.set(obj, value);
+            } catch (Exception ignored) { }
+        }
+    }
+
     @Nullable
-    private static Object callPrivateMethod(Object obj, String methodName, Object... args) throws InvocationTargetException, IllegalAccessException {
+    private static Object callPrivateMethod(Object obj, String methodName, Object... args) throws Exception {
         if (obj == null) return null;
         Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
         String key = clazz.getName() + "#" + methodName + "#" + args.length;
@@ -120,12 +134,12 @@ public abstract class Main {
             Hook(DialogsActivity.class, "calculateListViewPaddingBottom", new PaddingBottomHook());
             Hook(DialogsActivity.DialogsRecyclerView.class, "onMeasure", new XC_MethodHook() {
                 @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                protected void beforeHookedMethod(MethodHookParam param) {
                     measuringDialogsRecycler = true;
                 }
 
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                protected void afterHookedMethod(MethodHookParam param) {
                     measuringDialogsRecycler = false;
                 }
             });
@@ -133,6 +147,7 @@ public abstract class Main {
             Hook(DialogsActivity.class, "blur3_InvalidateBlur", new InvalidateBlurHook());
         } catch (Throwable t) {
             log("Failed to init:", t);
+            throw t;
         }
         log("Initialized!");
     }
@@ -148,15 +163,14 @@ public abstract class Main {
     }
 
     @Nullable
-    private static FilterTabsView getFilterTabsView(Object obj) {
-        return (FilterTabsView) getPrivateField(obj, "filterTabsView");
+    private static FilterTabsView getFilterTabsView(DialogsActivity activity) {
+        return (FilterTabsView) getPrivateField(activity, "filterTabsView");
     }
 
     private static boolean usesFloatingNavbar() {
         try {
             return BottomNavigationBar.floating();
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) { }
         return false;
     }
 
@@ -226,7 +240,7 @@ public abstract class Main {
 
     private static class DialogsActivityCalculationsHook extends XC_MethodHook {
         @Override
-        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+        protected void afterHookedMethod(MethodHookParam param) {
             try {
                 var activity = (DialogsActivity) param.thisObject;
                 var filterTabsView = getFilterTabsView(activity);
@@ -238,12 +252,13 @@ public abstract class Main {
                     var height = parent.getMeasuredHeight();
 
                     float translationY;
-                    if (usesFloatingNavbar()) {
+                    if (activity.hasMainTabs && usesFloatingNavbar()) {
                         var mainTabsActivity = findMainTabsActivity();
-                        View translationView = getTabsTranslationView(mainTabsActivity);
+
+                        View translationView = mainTabsActivity != null ? getTabsTranslationView(mainTabsActivity) : null;
+                        float tabsTranslationY = translationView != null ? translationView.getTranslationY() : 0f;
 
                         int tabsHeight = getFloatingNavbarHeight(activity, mainTabsActivity);
-                        float tabsTranslationY = translationView != null ? translationView.getTranslationY() : 0f;
 
                         translationY = ((height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight());
                         if (mainTabsActivity != null) {
@@ -270,9 +285,9 @@ public abstract class Main {
                 if (topPanel != null) {
                     float filtersTabHeight = AndroidUtilities.dp(43) * filterTabsView.getAlpha();
                     var animatorSearchVisible = (BoolAnimator) getPrivateField(activity, "animatorSearchVisible");
-                    assert animatorSearchVisible != null;
-                    float correction = filtersTabHeight * (1.0f - animatorSearchVisible.getFloatValue());
-                    topPanel.setTranslationY(topPanel.getTranslationY() - correction);
+                    if (animatorSearchVisible != null) {
+                        topPanel.setTranslationY(topPanel.getTranslationY() - filtersTabHeight * (1 - animatorSearchVisible.getFloatValue()));
+                    }
                 }
 
                 var topBubblesFade = (DialogsActivityTopBubblesFadeView) getPrivateField(activity, "topBubblesFadeView");
@@ -285,7 +300,7 @@ public abstract class Main {
 
                     float s = AndroidUtilities.dp(7) + (AndroidUtilities.dp(50) - AndroidUtilities.dp(7)) * Math.min(topPanelsVisibility, filtersTabVisibility);
 
-                    float topPanelsHeight = topPanel == null ? 0 : topPanel.getAnimatedHeightWithPadding(0);
+                    float topPanelsHeight = topPanel != null ? topPanel.getAnimatedHeightWithPadding(0) : 0;
 
                     float hParam = Math.min(AndroidUtilities.dp(40), topPanelsHeight - s);
                     topBubblesFade.setPosition(s, hParam);
@@ -299,15 +314,13 @@ public abstract class Main {
 
     private static class FabOffsetHook extends XC_MethodHook {
         @Override
-        protected void afterHookedMethod(MethodHookParam param) {
+        protected void beforeHookedMethod(MethodHookParam param) {
             try {
-                var filterTabsView = getFilterTabsView(param.thisObject);
+                var activity = (DialogsActivity) param.thisObject;
+                var filterTabsView = getFilterTabsView(activity);
                 if (filterTabsView == null) return;
 
-                var fab = (View) getPrivateField(param.thisObject, "floatingButton3");
-                if (fab != null) {
-                    fab.setTranslationY(fab.getTranslationY() - filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
-                }
+                setPrivateField(activity, "floatingButtonPanOffset", filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
             }
             catch (Exception e) {
                 log("Error adjusting FAB offset", e);
@@ -319,13 +332,13 @@ public abstract class Main {
         @Override
         protected void afterHookedMethod(MethodHookParam param) {
             try {
-                var activity = param.thisObject;
+                var activity = (DialogsActivity) param.thisObject;
                 var filterTabsView = getFilterTabsView(activity);
                 if (filterTabsView != null) {
                     var result = (int) param.getResult();
 
                     if (usesFloatingNavbar()) {
-                        int tabsHeight = getFloatingNavbarHeight((DialogsActivity) activity, null);
+                        int tabsHeight = getFloatingNavbarHeight(activity, null);
                         if (tabsHeight > 0) {
                             result = tabsHeight;
                         }
