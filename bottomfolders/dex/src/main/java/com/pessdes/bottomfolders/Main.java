@@ -4,6 +4,7 @@ import android.graphics.RectF;
 import android.view.View;
 
 import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.exteragram.messenger.config.BottomNavigationBar;
@@ -18,7 +19,6 @@ import org.telegram.ui.Components.FilterTabsView;
 import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.MainTabsActivity;
-import org.telegram.ui.MainTabsLayout;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -42,8 +42,8 @@ public abstract class Main {
     @Nullable
     private static Field getPrivateFieldField(Object obj, String fieldName) {
         if (obj == null) return null;
-        Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
-        String key = clazz.getName() + "#" + fieldName;
+        final Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
+        final String key = fieldName;
         Field field = fieldCache.get(key);
         if (field == null) {
             Class<?> current = clazz;
@@ -64,14 +64,24 @@ public abstract class Main {
     }
 
     @Nullable
-    private static Object getPrivateField(Object obj, String fieldName) {
-        var field = getPrivateFieldField(obj, fieldName);
+    private static<T> T getPrivateField(Object obj, String fieldName) {
+        final var field = getPrivateFieldField(obj, fieldName);
         if (field != null) {
             try {
-                return field.get(obj instanceof Class ? null : obj);
+                return (T) field.get(obj);
             } catch (Exception ignored) {}
         }
         return null;
+    }
+
+    private static int getPrivateInt(Object obj, String fieldName) {
+        final var field = getPrivateFieldField(obj, fieldName);
+        if (field != null) {
+            try {
+                return field.getInt(obj);
+            } catch (Exception ignored) {}
+        }
+        return 0;
     }
 
     private static void setPrivateField(Object obj, String fieldName, Object value) {
@@ -84,7 +94,7 @@ public abstract class Main {
     }
 
     @Nullable
-    private static Object callPrivateMethod(Object obj, String methodName, Object... args) throws Exception {
+    private static<T> T callPrivateMethod(Object obj, String methodName, Object... args){
         if (obj == null) return null;
         Class<?> clazz = obj instanceof Class ? (Class<?>) obj : obj.getClass();
         String key = clazz.getName() + "#" + methodName + "#" + args.length;
@@ -105,7 +115,9 @@ public abstract class Main {
             }
         }
         if (method != null) {
-            return method.invoke(obj instanceof Class ? null : obj, args);
+            try {
+                return (T) method.invoke(obj instanceof Class ? null : obj, args);
+            } catch (Exception ignored) {}
         }
         return null;
     }
@@ -156,7 +168,7 @@ public abstract class Main {
         @Override
         protected void beforeHookedMethod(MethodHookParam param) {
             if (measuringDialogsRecycler &&
-                    (int) Optional.ofNullable(getPrivateField(param.thisObject, "id")).orElse(-1) == 8) {
+                    getPrivateInt(param.thisObject, "id") == 8) {
                 param.setResult(0.0f);
             }
         }
@@ -164,12 +176,19 @@ public abstract class Main {
 
     @Nullable
     private static FilterTabsView getFilterTabsView(DialogsActivity activity) {
-        return (FilterTabsView) getPrivateField(activity, "filterTabsView");
+        return getPrivateField(activity, "filterTabsView");
     }
 
-    private static boolean usesFloatingNavbar() {
+    private static boolean usesFloatingTabs() {
         try {
             return BottomNavigationBar.floating();
+        } catch (Throwable ignored) { }
+        return false;
+    }
+
+    private static boolean usesMd3Tabs() {
+        try {
+            return MainTabsUiHelper.isMaterial3NavigationBar();
         } catch (Throwable ignored) { }
         return false;
     }
@@ -179,20 +198,33 @@ public abstract class Main {
         return LaunchActivity.findFragment(MainTabsActivity.class);
     }
 
-    @Nullable
-    private static View getTabsTranslationView(MainTabsActivity mainTabsActivity) {
-        if (mainTabsActivity == null) {
-            mainTabsActivity = findMainTabsActivity();
-        }
-
-        View tabsViewWrapper = (View) getPrivateField(mainTabsActivity, "tabsViewWrapper");
-        if (tabsViewWrapper != null) {
-            return tabsViewWrapper;
-        }
-        return (View) getPrivateField(mainTabsActivity, "tabsView");
+    private static int getNavigationBarHeight(@NonNull DialogsActivity activity) {
+        return getPrivateInt(activity, "navigationBarHeight");
     }
 
-    private static int getFloatingNavbarHeight(DialogsActivity activity, MainTabsActivity mainTabsActivity) {
+    private static int getPaddingBottom(DialogsActivity activity) {
+        var paddingBottom = (int) Optional.ofNullable(callPrivateMethod(activity, "calculateListViewPaddingBottom")).orElse(0);
+
+        if (activity.hasMainTabs) {
+            if (usesFloatingTabs()) {
+                var mainTabsActivity = findMainTabsActivity();
+                View tabsView = getPrivateField(mainTabsActivity, "tabsView");
+                if (tabsView != null) {
+                    var progress = 1 - tabsView.getAlpha();
+                    paddingBottom -= (int) (tabsView.getMeasuredHeight() * progress);
+
+                    if (usesMd3Tabs()) {
+                        paddingBottom += (int) (getNavigationBarHeight(activity) * progress);
+                    }
+                }
+            }
+
+        }
+
+        return paddingBottom;
+    }
+
+    private static int getFloatingTabsHeight(DialogsActivity activity, MainTabsActivity mainTabsActivity) {
         int navBarHeight = 0;
 
         if (mainTabsActivity == null) {
@@ -200,10 +232,7 @@ public abstract class Main {
         }
 
         if (activity != null) {
-            var tempNavBarHeight = getPrivateField(activity, "navigationBarHeight");
-            if (tempNavBarHeight != null) {
-                navBarHeight = (int) tempNavBarHeight;
-            }
+            navBarHeight = getNavigationBarHeight(activity);
 
             if (!activity.hasMainTabs) {
                 return navBarHeight;
@@ -217,7 +246,7 @@ public abstract class Main {
         if (tabsHeightPx <= 0) {
             try {
                 if (mainTabsActivity != null) {
-                    View tabsView = (View) getPrivateField(mainTabsActivity, "tabsView");
+                    View tabsView = getPrivateField(mainTabsActivity, "tabsView");
                     if (tabsView != null) {
                         tabsHeightPx = tabsView.getMeasuredHeight();
                         if (tabsHeightPx <= 0) {
@@ -251,39 +280,13 @@ public abstract class Main {
                     var parent = (View) p;
                     var height = parent.getMeasuredHeight();
 
-                    float translationY;
-                    if (activity.hasMainTabs && usesFloatingNavbar()) {
-                        var mainTabsActivity = findMainTabsActivity();
-
-                        View translationView = mainTabsActivity != null ? getTabsTranslationView(mainTabsActivity) : null;
-                        float tabsTranslationY = translationView != null ? translationView.getTranslationY() : 0f;
-
-                        int tabsHeight = getFloatingNavbarHeight(activity, mainTabsActivity);
-
-                        translationY = ((height - tabsHeight + tabsTranslationY) - filterTabsView.getTop() - filterTabsView.getMeasuredHeight());
-                        if (mainTabsActivity != null) {
-                            View tabsView;
-                            if (translationView instanceof MainTabsLayout) {
-                                tabsView = translationView;
-                            }
-                            else {
-                                tabsView = (View) getPrivateField(mainTabsActivity, "tabsView");
-                            }
-
-                            if (tabsView != null) {
-                                translationY += ((float) tabsView.getMeasuredHeight() / 2 * (1 - tabsView.getAlpha()));
-                            }
-                        }
-                    } else {
-                        int paddingBottom = (int) Optional.ofNullable(callPrivateMethod(activity, "calculateListViewPaddingBottom")).orElse(0);
-                        translationY = height - paddingBottom - filterTabsView.getTop();
-                    }
+                    float translationY = height - getPaddingBottom(activity) - filterTabsView.getTop();
                     filterTabsView.setTranslationY(translationY);
                 }
 
                 var topPanel = (DialogsActivityTopPanelLayout) getPrivateField(activity, "topPanelLayout");
                 if (topPanel != null) {
-                    float filtersTabHeight = AndroidUtilities.dp(43) * filterTabsView.getAlpha();
+                    float filtersTabHeight = filterTabsView.getHeight() * filterTabsView.getAlpha();
                     var animatorSearchVisible = (BoolAnimator) getPrivateField(activity, "animatorSearchVisible");
                     if (animatorSearchVisible != null) {
                         topPanel.setTranslationY(topPanel.getTranslationY() - filtersTabHeight * (1 - animatorSearchVisible.getFloatValue()));
@@ -293,14 +296,14 @@ public abstract class Main {
                 var topBubblesFade = (DialogsActivityTopBubblesFadeView) getPrivateField(activity, "topBubblesFadeView");
                 if (topBubblesFade != null) {
                     float topPanelsVisibility = 0.0f;
+                    float topPanelsHeight = 0.0f;
                     if (topPanel != null) {
                         topPanelsVisibility = topPanel.getMetadata().getTotalVisibility();
+                        topPanelsHeight = topPanel.getAnimatedHeightWithPadding(0);
                     }
                     float filtersTabVisibility = filterTabsView.getAlpha();
 
                     float s = AndroidUtilities.dp(7) + (AndroidUtilities.dp(50) - AndroidUtilities.dp(7)) * Math.min(topPanelsVisibility, filtersTabVisibility);
-
-                    float topPanelsHeight = topPanel != null ? topPanel.getAnimatedHeightWithPadding(0) : 0;
 
                     float hParam = Math.min(AndroidUtilities.dp(40), topPanelsHeight - s);
                     topBubblesFade.setPosition(s, hParam);
@@ -337,8 +340,8 @@ public abstract class Main {
                 if (filterTabsView != null) {
                     var result = (int) param.getResult();
 
-                    if (usesFloatingNavbar()) {
-                        int tabsHeight = getFloatingNavbarHeight(activity, null);
+                    if (usesFloatingTabs()) {
+                        int tabsHeight = getFloatingTabsHeight(activity, null);
                         if (tabsHeight > 0) {
                             result = tabsHeight;
                         }
@@ -368,29 +371,11 @@ public abstract class Main {
                 if (fragmentView == null) return;
 
                 int fragmentHeight = fragmentView.getMeasuredHeight();
+                float top = fragmentHeight - getPaddingBottom(activity);
 
-                float top;
-                float bottom = fragmentHeight;
-
-                if (usesFloatingNavbar()) {
-                    var mainTabsActivity = findMainTabsActivity();
-                    View translationView = getTabsTranslationView(mainTabsActivity);
-                    float tabsTranslationY = translationView != null ? translationView.getTranslationY() : 0f;
-                    int tabsHeight = getFloatingNavbarHeight(activity, mainTabsActivity);
-
-                    top = fragmentHeight - tabsHeight + tabsTranslationY - (filterTabsView.getMeasuredHeight() * filterTabsView.getAlpha());
-                } else {
-                    int paddingBottom = (int) callPrivateMethod(activity, "calculateListViewPaddingBottom");
-                    top = fragmentHeight - paddingBottom;
-                    if (activity.hasMainTabs) {
-                        int navigationBarHeight = (int) getPrivateField(activity, "navigationBarHeight");
-                        bottom = fragmentHeight - navigationBarHeight - AndroidUtilities.dp(8);
-                    }
-                }
-
-                RectF iBlur3PositionMainTabs = (RectF) getPrivateField(activity, "iBlur3PositionMainTabs");
+                RectF iBlur3PositionMainTabs = getPrivateField(activity, "iBlur3PositionMainTabs");
                 if (iBlur3PositionMainTabs != null) {
-                    iBlur3PositionMainTabs.set(0, top, fragmentView.getMeasuredWidth(), bottom);
+                    iBlur3PositionMainTabs.set(0, top, fragmentView.getMeasuredWidth(), (float) fragmentHeight);
                     iBlur3PositionMainTabs.inset(0, LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS) ? 0 : -AndroidUtilities.dp(48));
                 }
 
